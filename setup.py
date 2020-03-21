@@ -73,6 +73,8 @@ def bot_start(message):
     for i in table_array:  # формирование строки querry_array
         quarry_array += '{'
         for j in i:
+            while j.find('"', 0, len(j)):
+                j.replace('"', '*')
             quarry_array += '"' + j + '", '
         quarry_array = quarry_array[:len(quarry_array) - 1]
         quarry_array = quarry_array[:len(quarry_array) - 1]
@@ -81,6 +83,8 @@ def bot_start(message):
     quarry_array = quarry_array[:len(quarry_array) - 1]
     quarry_array += '}'
     for i in table_names:  # формирование строки names_array
+        while i.find('"', 0, len(i)):
+            i.replace('"', '*')
         names_array += '"' + i + '", '
     names_array = names_array[:len(names_array) - 1]
     names_array = names_array[:len(names_array) - 1]
