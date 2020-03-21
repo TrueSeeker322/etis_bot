@@ -6,11 +6,11 @@ from contextlib import closing
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
-with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:
+'''with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:
     with conn.cursor() as cursor:
         cursor.execute("INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (1,'Мурзин','123456');")
         cursor.execute("SELECT * FROM tg_user_data;")
-        print(cursor.fetchone())
+        print(cursor.fetchone())'''
 bot = telebot.TeleBot('997665653:AAGq43XKERQVcskXrxkMNBeLwkpZAoIDfKs')
 
 
