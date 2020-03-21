@@ -50,6 +50,7 @@ def auth(message):
             cursor.execute(
                 'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
                 {'tg_id': message.from_user.id, 'etis_login': login_var, 'etis_pass': password_var})
+            conn.commit();
             cursor.execute("SELECT * FROM tg_user_data;")
             print(cursor.fetchall())
         finally:
