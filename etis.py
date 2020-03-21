@@ -35,14 +35,11 @@ def authentication(auth,sess):  # функция аутентификации
     response = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
-    #print(soup.text)
     if soup.text.find('2396870', 0, len(soup.text)) == -1:
         print('успешная авторизхация')
-        print (soup.text.find('2396870', 0, len(soup.text)))
         return True
     else:
         print('провальная авторизхация')
-        print (soup.text.find('2396870'), 0, len(soup.text))
         return False
 
 
