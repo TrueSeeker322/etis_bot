@@ -67,8 +67,16 @@ def auth(message):
 
 @bot.message_handler(commands=['bot_start'])
 def bot_start(message):
-    info_scrapping(session_dict[message.from_user.id])
-    
+    quarry_array = '{'  # строка
+    table_array, table_names = info_scrapping(session_dict[message.from_user.id])
+    for i in table_array:
+        quarry_array += '{'
+        for j in i:
+            quarry_array += '"' + j + '", '
+        quarry_array += '}, '
+    quarry_array += '}'
+    print(quarry_array)
+
 
 @bot.message_handler(content_types=['text'])
 def text_message(message):

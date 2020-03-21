@@ -60,7 +60,6 @@ def info_scrapping(sess):  # сборка информации на страни
             count_rows += 1
             row_id += 2
         count_tables += 1
-    print(table_array)
     return table_array, table_names
 
 
