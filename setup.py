@@ -42,20 +42,14 @@ def auth(message):
     s = requests.Session()
     if authentication(auth_data, s):
         bot.send_message(message.chat.id, 'Вход успешен. Для запуска работы бота нажмите /bot_start: ')
-        #with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:
-            #with conn.cursor() as cursor:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-        cursor = conn.cursor()
-        try:
-            cursor.execute(
-                'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
-                {'tg_id': message.from_user.id, 'etis_login': login_var, 'etis_pass': password_var})
-            conn.commit();
-            cursor.execute("SELECT * FROM tg_user_data;")
-            print(cursor.fetchall())
-        finally:
-            cursor.close()
-            conn.close()
+        with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
+                    {'tg_id': message.from_user.id, 'etis_login': login_var, 'etis_pass': password_var})
+                conn.commit();
+                cursor.execute("SELECT * FROM tg_user_data;")
+                print(cursor.fetchall())
     else:
         bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                           'просмотра введённых данных нажмите /user_data')
