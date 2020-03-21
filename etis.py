@@ -36,13 +36,13 @@ def authentication(auth,sess):  # функция аутентификации
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
     #print(soup.text)
-    if soup.text.find('2396870'.encode('cp1251'), 0, len(soup)) == -1:
+    if soup.text.find(str('2396870').encode('cp1251'), 0, len(soup)) == -1:
         print('успешная авторизхация')
-        print (soup.text.find('2396870'.encode('cp1251'), 0, len(soup)))
+        print (soup.text.find(str('2396870').encode('cp1251'), 0, len(soup)))
         return True
     else:
         print('провальная авторизхация')
-        print (soup.text.find('2396870'.encode('cp1251'), 0, len(soup)))
+        print (soup.text.find(str('2396870').encode('cp1251'), 0, len(soup)))
         return False
 
 
