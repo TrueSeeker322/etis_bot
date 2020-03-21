@@ -36,7 +36,7 @@ def authentication(auth,sess):  # функция аутентификации
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
     print(soup.text)
-    if soup.text.find('2396870', 0, len(soup)) == -1:
+    if soup.text.find("2396870.", 0, len(soup)) == -1:
         print('успешная авторизхация')
         return True
     else:
