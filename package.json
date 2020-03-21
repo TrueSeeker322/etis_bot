@@ -1,0 +1,3 @@
+\"scripts\": {
+\"deploy\": \"git add . && git commit -am \'fix\' && git push heroku master\"
+}

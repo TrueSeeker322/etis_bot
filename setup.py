@@ -4,9 +4,15 @@ from etis import *
 import psycopg2
 
 DATABASE_URL = os.environ['DATABASE_URL']
-
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-
+try:
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    cursor = conn.cursos()
+    cursor.execute("INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (1,'Мурзин','123456');")
+    cursor.execute("SELECT * FROM tg_user_data;")
+    print(cursor.fetchone())
+finally:
+    cursor.close()
+    conn.close()
 bot = telebot.TeleBot('997665653:AAGq43XKERQVcskXrxkMNBeLwkpZAoIDfKs')
 
 
