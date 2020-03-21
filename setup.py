@@ -94,8 +94,9 @@ def bot_start(message):
             if not cursor.fetchone():  # если в бд еще нет такой записи
                 cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s", {'tg_id': str(message.from_user.id)})
                 cursor.execute(
-                    "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%table_names)s",
+                    "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
                     {'tg_id': str(message.from_user.id), 'table_array': quarry_array, 'table_names': names_array})
+                conn.commit()
             else:  # если в бд есть такая запись, то проверим на сходство данных
                 print(cursor.fetchone()[0])
 
