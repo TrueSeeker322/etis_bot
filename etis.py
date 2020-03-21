@@ -32,12 +32,10 @@ count_rows = 0  # сквозной id строки
 
 def authentication(auth,sess):  # функция аутентификации
     global s, response, r
-    '''s = requests.Session()  # создание сессии
-    response = s.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию
-    r = s.get(url, headers=headers)  # получение страницы'''
     response = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
+    print(soup)
     if soup.text.find('2396870', 0, len(soup)) == -1:
         print('успешная авторизхация')
         return True
