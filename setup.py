@@ -73,8 +73,8 @@ def bot_start(message):
         quarry_array += '{'
         for j in i:
             quarry_array += '"' + j + '", '
-            quarry_array = quarry_array[:len(quarry_array) - 1]
-            quarry_array = quarry_array[:len(quarry_array) - 1]
+        quarry_array = quarry_array[:len(quarry_array) - 1]
+        quarry_array = quarry_array[:len(quarry_array) - 1]
         quarry_array += '}, '
     quarry_array = quarry_array[:len(quarry_array) - 1]
     quarry_array = quarry_array[:len(quarry_array) - 1]
