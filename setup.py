@@ -4,6 +4,8 @@ from etis import *
 import psycopg2
 
 DATABASE_URL = os.environ['DATABASE_URL']
+conn = None
+cursor = None
 try:
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cursor = conn.cursos()
