@@ -11,7 +11,6 @@ try:
     cursor.execute("SELECT * FROM tg_user_data;")
     print(cursor.fetchone())
 finally:
-    global conn, cursor
     cursor.close()
     conn.close()
 bot = telebot.TeleBot('997665653:AAGq43XKERQVcskXrxkMNBeLwkpZAoIDfKs')
