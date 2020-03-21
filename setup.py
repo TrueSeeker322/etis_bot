@@ -80,13 +80,21 @@ def bot_start(message):
     quarry_array = quarry_array[:len(quarry_array) - 1]
     quarry_array = quarry_array[:len(quarry_array) - 1]
     quarry_array += '}'
-    for i in table_names:
+    for i in table_names:  # формирование строки names_array
         names_array += '"' + i + '", '
     names_array = names_array[:len(names_array) - 1]
     names_array = names_array[:len(names_array) - 1]
     names_array += '}'
-    print(quarry_array)
-    print(names_array)
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s", message.from_user.id)
+            if not cursor.fetchone():  # если в бд еще нет такой записи
+                cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s", message.from_user.id)
+                cursor.execute(
+                    "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%table_names)s",
+                    message.from_user.id, quarry_array, names_array)
+            else:  # если в бд есть такая запись, то проверим на сходство данных
+                print(cursor.fetchone()[0])
 
 
 @bot.message_handler(content_types=['text'])
