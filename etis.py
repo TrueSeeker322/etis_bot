@@ -1,4 +1,3 @@
-
 import requests
 import os
 from fake_useragent import UserAgent
@@ -12,12 +11,6 @@ headers = {
     'User-Agent': UserAgent().chrome
 }
 
-auth = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
-        'p_username'.encode('cp1251'): 'Мурзин'.encode('cp1251'),
-        'p_password'.encode('cp1251'): '568219'.encode('cp1251')}
-'''auth = {'p_redirect': 'stu.timetable',
-        'p_username': 'Мурзин',
-        'p_password': '568219'}'''
 r = ''
 soup = ''
 s = ''
@@ -30,7 +23,7 @@ count_tables = 0  # id таблицы
 count_rows = 0  # сквозной id строки
 
 
-def authentication(auth,sess):  # функция аутентификации
+def authentication(auth, sess):  # функция аутентификации
     global s, response, r
     response = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию
     r = sess.get(url, headers=headers)  # получение страницы
@@ -68,8 +61,7 @@ def info_scrapping(sess):  # сборка информации на страни
             row_id += 2
         count_tables += 1
     print(table_array)
-    print(type(table_array))
-    return table_array
+    return table_array, table_names
 
 
 def new_info_processing():

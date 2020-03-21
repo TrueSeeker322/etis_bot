@@ -3,9 +3,16 @@ import time
 from etis import *
 import psycopg2
 from contextlib import closing
+import uuid
+import hashlib
 
 DATABASE_URL = os.environ['DATABASE_URL']
 bot = telebot.TeleBot('997665653:AAGq43XKERQVcskXrxkMNBeLwkpZAoIDfKs')
+
+
+def hash_pass(password):
+    salt = uuid.uuid4().hex
+    return hashlib.sha256(salt.encode() + password.encode()).hexdigest() + ':' + salt
 
 
 @bot.message_handler(commands=['start'])
@@ -22,7 +29,8 @@ def start_message(message):
 
 @bot.message_handler(commands=['user_data'])
 def user_data_message(message):
-    mes = bot.send_message(message.chat.id, ('Логин: ' + login_dict[message.from_user.id] + '\n Пароль: ' + pass_dict[message.from_user.id]))
+    mes = bot.send_message(message.chat.id, (
+            'Логин: ' + login_dict[message.from_user.id] + '\n Пароль: ' + pass_dict[message.from_user.id]))
     time.sleep(6)
     bot.delete_message(message.chat.id, mes.message_id)
 
@@ -32,32 +40,35 @@ def auth(message):
     auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
                  'p_username'.encode('cp1251'): login_dict[message.from_user.id].encode('cp1251'),
                  'p_password'.encode('cp1251'): pass_dict[message.from_user.id].encode('cp1251')}
-    s = requests.Session()
-    if authentication(auth_data, s):
+    session_dict[message.from_user.id] = requests.Session()  # добавление подключения в словарь
+    if authentication(auth_data, session_dict[message.from_user.id]):
         bot.send_message(message.chat.id, 'Вход успешен. Для запуска работы бота нажмите /bot_start: ')
         with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
             with conn.cursor() as cursor:
-                cursor.execute('SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;',
+                cursor.execute("SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;",
                                {'tg_id': str(message.from_user.id)})
                 if not cursor.fetchall():
                     cursor.execute(
-                        'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
-                        {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id], 'etis_pass': pass_dict[message.from_user.id]})
+                        "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);",
+                        {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
+                         'etis_pass': pass_dict[message.from_user.id]})
                     cursor.execute('SELECT * FROM tg_user_data;')
                 else:
                     cursor.execute(
-                        'UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;',
-                        {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id], 'etis_pass': pass_dict[message.from_user.id]})
+                        "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;",
+                        {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
+                         'etis_pass': pass_dict[message.from_user.id]})
                 conn.commit()
     else:
+        del session_dict[message.from_user.id]
         bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                           'просмотра введённых данных нажмите /user_data')
 
 
 @bot.message_handler(commands=['bot_start'])
 def bot_start(message):
-    a = message  # убрать
-
+    info_scrapping(session_dict[message.from_user.id])
+    
 
 @bot.message_handler(content_types=['text'])
 def text_message(message):
