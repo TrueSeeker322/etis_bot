@@ -46,7 +46,7 @@ def auth(message):
             with conn.cursor() as cursor:
                 cursor.execute('SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;',
                                {'tg_id': str(message.from_user.id)})
-                if cursor.fetchall() != []:
+                if not cursor.fetchall():
                     print(1)
                     cursor.execute(
                         'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
