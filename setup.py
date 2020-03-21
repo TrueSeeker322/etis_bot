@@ -42,9 +42,8 @@ def auth(message):
     s = requests.Session()
     if authentication(auth_data, s):
         bot.send_message(message.chat.id, 'Вход успешен. Для запуска работы бота нажмите /bot_start: ')
-        session_dict.update({message.from_user.id: s})
-        user_tables_dict.update(
-            {info_scrapping(session_dict[message.from_user.id])})  # добавление таблицы данных в словарь
+        #session_dict.update({message.from_user.id: s})
+        #user_tables_dict.update({info_scrapping(session_dict[message.from_user.id])})  # добавление таблицы данных в словарь
     else:
         bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                           'просмотра введённых данных нажмите /user_data')
