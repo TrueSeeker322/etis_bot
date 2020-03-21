@@ -67,9 +67,10 @@ def auth(message):
 
 @bot.message_handler(commands=['bot_start'])
 def bot_start(message):
-    quarry_array = '{'  # строка
+    quarry_array = '{'  # строка для вывода информации об оценках в бд
+    names_array = '{'  # строка для вывода информации об предметах в бд
     table_array, table_names = info_scrapping(session_dict[message.from_user.id])
-    for i in table_array:
+    for i in table_array:  # формирование строки querry_array
         quarry_array += '{'
         for j in i:
             quarry_array += '"' + j + '", '
@@ -79,7 +80,13 @@ def bot_start(message):
     quarry_array = quarry_array[:len(quarry_array) - 1]
     quarry_array = quarry_array[:len(quarry_array) - 1]
     quarry_array += '}'
+    for i in table_names:
+        names_array += '"' + i + '", '
+    names_array = names_array[:len(names_array) - 1]
+    names_array = names_array[:len(names_array) - 1]
+    names_array += '}'
     print(quarry_array)
+    print(names_array)
 
 
 @bot.message_handler(content_types=['text'])
