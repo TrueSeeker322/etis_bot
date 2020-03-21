@@ -49,13 +49,13 @@ def auth(message):
                     cursor.execute(
                         'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
                         {'tg_id': message.from_user.id, 'etis_login': login_var, 'etis_pass': password_var})
-                    conn.commit()
                     cursor.execute('SELECT * FROM tg_user_data;')
                     print(cursor.fetchall())
                 else:
                     cursor.execute(
                         'UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;',
                         {'tg_id': message.from_user.id, 'etis_login': login_var, 'etis_pass': password_var})
+                conn.commit()
     else:
         bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                           'просмотра введённых данных нажмите /user_data')
