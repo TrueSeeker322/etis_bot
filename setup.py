@@ -47,12 +47,14 @@ def auth(message):
                 cursor.execute('SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;',
                                {'tg_id': str(message.from_user.id)})
                 if cursor.fetchall() != []:
+                    print(1)
                     cursor.execute(
                         'INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);',
                         {'tg_id': str(message.from_user.id), 'etis_login': login_var, 'etis_pass': password_var})
                     cursor.execute('SELECT * FROM tg_user_data;')
                     print(cursor.fetchall())
                 else:
+                    print(2)
                     cursor.execute(
                         'UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;',
                         {'tg_id': str(message.from_user.id), 'etis_login': login_var, 'etis_pass': password_var})
