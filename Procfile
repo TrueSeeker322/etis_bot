@@ -1,2 +1,2 @@
-bot: python bot.py
+bot: python setup.py
 

@@ -1,6 +1,11 @@
 import telebot
 import time
 from etis import *
+import psycopg2
+
+DATABASE_URL = os.environ['postgres://rsyvvpoplwgisz:bd99ff7d23a9be1a646d97443ee7ce8c519737252864fa5e8f6d085475926fd3@ec2-46-137-177-160.eu-west-1.compute.amazonaws.com:5432/dm0kbu27emvc']
+
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 bot = telebot.TeleBot('997665653:AAGq43XKERQVcskXrxkMNBeLwkpZAoIDfKs')
 
