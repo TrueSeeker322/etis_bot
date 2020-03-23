@@ -87,7 +87,6 @@ def bot_start(message):
                 quarry_array += '{'
                 for j in i:
                     j = j.replace('"', '*')
-                    j = j.replace("'", '*')
                     quarry_array += '"' + j + '", '
                 quarry_array = quarry_array[:len(quarry_array) - 1]
                 quarry_array = quarry_array[:len(quarry_array) - 1]
@@ -119,7 +118,19 @@ def bot_start(message):
                     else:  # если в бд есть такая запись, то проверим на сходство данных
                         cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
                                        {'tg_id': str(message.from_user.id)})
-                        print(cursor.fetchone()[0])
+                        temp_counter = 0
+                        fetch = cursor.fetchone()
+                        temp_tables = fetch[0]
+                        temp_names = fetch[1]
+                        for i in table_names:
+                            i = i.replace('"', '*')
+                            if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                                print(i)
+                                break  # тут вставить сбор информации заново 
+                            else:
+                                print('clear')  # temp
+                            temp_names += 1
+
                         # TODO
         else:
             bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
