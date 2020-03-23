@@ -68,8 +68,9 @@ def auth(message):
                 del session_dict[message.from_user.id]
                 bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                                   'просмотра введённых данных нажмите /user_data')
-    except e:
+    except:
         bot.send_message(message.chat.id, 'Не ввёден логин или пароль. /login')
+
 
 @bot.message_handler(commands=['bot_start'])
 def bot_start(message):
