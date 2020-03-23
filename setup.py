@@ -64,51 +64,61 @@ def auth(message):
                                 {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
                                  'etis_pass': pass_dict[message.from_user.id]})
                         conn.commit()
+                auth_dict[message.from_user.id] = True
             else:
                 del session_dict[message.from_user.id]
                 bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                                   'просмотра введённых данных нажмите /user_data')
+                auth_dict[message.from_user.id] = False
     except:
         bot.send_message(message.chat.id, 'Не ввёден логин или пароль. /login')
 
 
 @bot.message_handler(commands=['bot_start'])
 def bot_start(message):
-    quarry_array = '{'  # строка для вывода информации об оценках в бд
-    names_array = '{'  # строка для вывода информации об предметах в бд
-    table_array, table_names = info_scrapping(session_dict[message.from_user.id])
-    for i in table_array:  # формирование строки querry_array
-        quarry_array += '{'
-        for j in i:
-            j = j.replace('"', '*')
-            quarry_array += '"' + j + '", '
-        quarry_array = quarry_array[:len(quarry_array) - 1]
-        quarry_array = quarry_array[:len(quarry_array) - 1]
-        quarry_array += '}, '
-    quarry_array = quarry_array[:len(quarry_array) - 1]
-    quarry_array = quarry_array[:len(quarry_array) - 1]
-    quarry_array += '}'
-    for i in table_names:  # формирование строки names_array
-        i = i.replace('"', '*')
-        names_array += '"' + i + '", '
-    names_array = names_array[:len(names_array) - 1]
-    names_array = names_array[:len(names_array) - 1]
-    names_array += '}'
-    print(quarry_array)
-    print(names_array)
-    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
-                           {'tg_id': str(message.from_user.id)})
-            if not cursor.fetchone():  # если в бд еще нет такой записи
-                cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s", {'tg_id': str(message.from_user.id)})
-                cursor.execute(
-                    "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
-                    {'tg_id': str(message.from_user.id), 'table_array': quarry_array, 'table_names': names_array})
-                conn.commit()
-            else:  # если в бд есть такая запись, то проверим на сходство данных
-                print(cursor.fetchone()[0])
-                # TODO
+    try:
+        if auth_dict[message.from_user.id]:
+            quarry_array = '{'  # строка для вывода информации об оценках в бд
+            names_array = '{'  # строка для вывода информации об предметах в бд
+            table_array, table_names = info_scrapping(session_dict[message.from_user.id])
+            for i in table_array:  # формирование строки querry_array
+                quarry_array += '{'
+                for j in i:
+                    j = j.replace('"', '*')
+                    quarry_array += '"' + j + '", '
+                quarry_array = quarry_array[:len(quarry_array) - 1]
+                quarry_array = quarry_array[:len(quarry_array) - 1]
+                quarry_array += '}, '
+            quarry_array = quarry_array[:len(quarry_array) - 1]
+            quarry_array = quarry_array[:len(quarry_array) - 1]
+            quarry_array += '}'
+            for i in table_names:  # формирование строки names_array
+                i = i.replace('"', '*')
+                names_array += '"' + i + '", '
+            names_array = names_array[:len(names_array) - 1]
+            names_array = names_array[:len(names_array) - 1]
+            names_array += '}'
+            print(quarry_array)
+            print(names_array)
+            with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
+                                   {'tg_id': str(message.from_user.id)})
+                    if not cursor.fetchone():  # если в бд еще нет такой записи
+                        cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
+                                       {'tg_id': str(message.from_user.id)})
+                        cursor.execute(
+                            "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
+                            {'tg_id': str(message.from_user.id), 'table_array': quarry_array,
+                             'table_names': names_array})
+                        conn.commit()
+                    else:  # если в бд есть такая запись, то проверим на сходство данных
+                        print(cursor.fetchone()[0])
+                        # TODO
+        else:
+            bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
+    except:
+        bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
 
 
 @bot.message_handler(content_types=['text'])
@@ -126,6 +136,7 @@ def text_message(message):
         bot.send_message(message.chat.id, 'Для авторизации нажмите /authorize')
 
 
+auth_dict = {}
 login_flag_dict = {}
 password_flag_dict = {}
 session_dict = {}  # словарь всех подключений
