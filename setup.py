@@ -123,13 +123,12 @@ def bot_start(message):
                         temp_tables = fetch[0]
                         temp_names = fetch[1]
                         for i in table_names:
-                            i = i.replace('"', '*')
                             if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
                                 print(i)
-                                break  # тут вставить сбор информации заново 
+                                #break  # тут вставить сбор информации заново
                             else:
                                 print('clear')  # temp
-                            temp_names += 1
+                            temp_counter += 1
 
                         # TODO
         else:
