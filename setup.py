@@ -113,7 +113,7 @@ def bot_start(message):
                              'table_names': names_array})
                         conn.commit()
                     else:  # если в бд есть такая запись, то проверим на сходство данных
-                        print(cursor.fetchone()[0])
+                        print(cursor.fetchone())
                         # TODO
         else:
             bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
