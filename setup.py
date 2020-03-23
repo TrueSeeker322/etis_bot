@@ -129,6 +129,14 @@ def bot_start(message):
                             else:
                                 print('clear')  # temp
                             temp_counter += 1
+                        print('___________________________________________')
+                        temp_counter = 1
+                        for i in table_array:
+                            if i[3] != temp_tables[temp_counter][3]:
+                                print('clear')
+                            else:
+                                print(i[2] + '_' + i[3] + '_' + temp_tables[temp_counter][3])
+                            temp_counter += 1
 
                         # TODO
         else:
