@@ -81,6 +81,8 @@ def bot_start(message):
             quarry_array = '{'  # строка для вывода информации об оценках в бд
             names_array = '{'  # строка для вывода информации об предметах в бд
             table_array, table_names = info_scrapping(session_dict[message.from_user.id])
+            print (table_array)
+            print('__________________________')
             for i in table_array:  # формирование строки querry_array
                 quarry_array += '{'
                 for j in i:
@@ -98,8 +100,8 @@ def bot_start(message):
             names_array = names_array[:len(names_array) - 1]
             names_array = names_array[:len(names_array) - 1]
             names_array += '}'
-            print(quarry_array)
-            print(names_array)
+            #print(quarry_array)
+            #print(names_array)
             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
                 with conn.cursor() as cursor:
                     cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
