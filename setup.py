@@ -113,7 +113,9 @@ def bot_start(message):
                              'table_names': names_array})
                         conn.commit()
                     else:  # если в бд есть такая запись, то проверим на сходство данных
-                        print(cursor.fetchone())
+                        cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
+                                       {'tg_id': str(message.from_user.id)})
+                        print(cursor.fetchone()[0])
                         # TODO
         else:
             bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
