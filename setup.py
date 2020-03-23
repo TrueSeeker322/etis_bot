@@ -38,36 +38,38 @@ def user_data_message(message):
 
 @bot.message_handler(commands=['authorize'])
 def auth(message):
-    if login_dict[message.from_user.id] == 'Не введён' or pass_dict[message.from_user.id] == 'Не введён':
-        bot.send_message(message.chat.id, 'Не ввёден логин или пароль. /login')
-    else:
-        auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
-                     'p_username'.encode('cp1251'): login_dict[message.from_user.id].encode('cp1251'),
-                     'p_password'.encode('cp1251'): pass_dict[message.from_user.id].encode('cp1251')}
-        session_dict[message.from_user.id] = requests.Session()  # добавление подключения в словарь
-        if authentication(auth_data, session_dict[message.from_user.id]):
-            bot.send_message(message.chat.id, 'Вход успешен. Для запуска работы бота нажмите /bot_start: ')
-            with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;",
-                                   {'tg_id': str(message.from_user.id)})
-                    if not cursor.fetchall():
-                        cursor.execute(
-                            "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);",
-                            {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
-                             'etis_pass': pass_dict[message.from_user.id]})
-                        cursor.execute('SELECT * FROM tg_user_data;')
-                    else:
-                        cursor.execute(
-                            "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;",
-                            {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
-                             'etis_pass': pass_dict[message.from_user.id]})
-                    conn.commit()
+    try:
+        if login_dict[message.from_user.id] == 'Не введён' or pass_dict[message.from_user.id] == 'Не введён':
+            bot.send_message(message.chat.id, 'Не ввёден логин или пароль. /login')
         else:
-            del session_dict[message.from_user.id]
-            bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
-                                              'просмотра введённых данных нажмите /user_data')
-
+            auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
+                         'p_username'.encode('cp1251'): login_dict[message.from_user.id].encode('cp1251'),
+                         'p_password'.encode('cp1251'): pass_dict[message.from_user.id].encode('cp1251')}
+            session_dict[message.from_user.id] = requests.Session()  # добавление подключения в словарь
+            if authentication(auth_data, session_dict[message.from_user.id]):
+                bot.send_message(message.chat.id, 'Вход успешен. Для запуска работы бота нажмите /bot_start: ')
+                with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
+                    with conn.cursor() as cursor:
+                        cursor.execute("SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;",
+                                       {'tg_id': str(message.from_user.id)})
+                        if not cursor.fetchall():
+                            cursor.execute(
+                                "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);",
+                                {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
+                                 'etis_pass': pass_dict[message.from_user.id]})
+                            cursor.execute('SELECT * FROM tg_user_data;')
+                        else:
+                            cursor.execute(
+                                "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;",
+                                {'tg_id': str(message.from_user.id), 'etis_login': login_dict[message.from_user.id],
+                                 'etis_pass': pass_dict[message.from_user.id]})
+                        conn.commit()
+            else:
+                del session_dict[message.from_user.id]
+                bot.send_message(message.chat.id, 'Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
+                                                  'просмотра введённых данных нажмите /user_data')
+    except e:
+        bot.send_message(message.chat.id, 'Не ввёден логин или пароль. /login')
 
 @bot.message_handler(commands=['bot_start'])
 def bot_start(message):
