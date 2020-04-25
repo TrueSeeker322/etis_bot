@@ -39,9 +39,9 @@ def user_data_message(message):
 @bot.message_handler(commands=['authorize'])
 def auth(message):
     if login_dict.get(message.from_user.id) == 'Не введён' or \
-            login_dict.get(message.from_user.id) == none or \
+            login_dict.get(message.from_user.id) is None or \
             pass_dict.get(message.from_user.id) == 'Не введён' or \
-            pass_dict.get(message.from_user.id) == none:
+            pass_dict.get(message.from_user.id) is None:
         bot.send_message(message.chat.id, 'Не ввёден логин или пароль. /login')
     else:
         auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
