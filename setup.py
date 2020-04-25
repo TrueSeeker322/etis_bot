@@ -132,9 +132,9 @@ def bot_start(message):
                     temp_counter = 1
                     for i in table_array:
                         if i[3] != temp_tables[temp_counter][3]:
-                            print(temp_tables[temp_counter][3], '    clear')
+                            print(temp_tables[temp_counter][2], '    clear')
                         else:
-                            print(i[2] + '_' + i[3] + '_' + temp_tables[temp_counter][3])
+                            print(i[2] + '_' + temp_tables[temp_counter][2], ' НЕ СОВПАДАЕТ')
                         temp_counter += 1
 
                     # TODO
