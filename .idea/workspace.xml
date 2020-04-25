@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="fdb9b49a-f8fd-4db2-ac47-aec96510e354" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="fdb9b49a-f8fd-4db2-ac47-aec96510e354" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -16,11 +14,7 @@
       </list>
     </option>
   </component>
-  <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
   <component name="ProjectId" id="1XrB0NG1zjfj1bpFN1rPLrZwvnc" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showExcludedFiles" value="true" />
@@ -110,12 +104,6 @@
       <workItem from="1582961847960" duration="617000" />
       <workItem from="1583860953512" duration="237000" />
       <workItem from="1584279821082" duration="9588000" />
-      <workItem from="1584728615230" duration="4440000" />
-      <workItem from="1584779589202" duration="24380000" />
-      <workItem from="1584984185187" duration="6621000" />
-      <workItem from="1585063726483" duration="24000" />
-      <workItem from="1587795201955" duration="3671000" />
-      <workItem from="1587832749916" duration="745000" />
     </task>
     <servers />
   </component>
@@ -135,18 +123,14 @@
       <screen x="0" y="0" width="1600" height="860" />
     </state>
     <state x="399" y="89" key="#Notifications/0.0.1600.860@0.0.1600.860" timestamp="1582308818670" />
-    <state x="392" y="88" key="#SQL_Dialects" timestamp="1584810974623">
+    <state x="254" y="85" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1584281754992">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
-    <state x="392" y="88" key="#SQL_Dialects/0.0.1600.860@0.0.1600.860" timestamp="1584810974623" />
-    <state x="254" y="85" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1584783196415">
+    <state x="254" y="85" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1600.860@0.0.1600.860" timestamp="1584281754992" />
+    <state x="580" y="185" key="FileChooserDialogImpl" timestamp="1582309012115">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
-    <state x="254" y="85" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1600.860@0.0.1600.860" timestamp="1584783196415" />
-    <state x="580" y="185" key="FileChooserDialogImpl" timestamp="1584780154440">
-      <screen x="0" y="0" width="1600" height="860" />
-    </state>
-    <state x="580" y="185" key="FileChooserDialogImpl/0.0.1600.860@0.0.1600.860" timestamp="1584780154440" />
+    <state x="580" y="185" key="FileChooserDialogImpl/0.0.1600.860@0.0.1600.860" timestamp="1582309012115" />
     <state width="1557" height="276" key="GridCell.Tab.0.bottom" timestamp="1584300237896">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
@@ -183,14 +167,14 @@
       <screen x="0" y="0" width="1600" height="860" />
     </state>
     <state x="301" y="72" key="SettingsEditor/0.0.1600.860@0.0.1600.860" timestamp="1582309087224" />
-    <state x="496" y="254" key="com.intellij.ide.util.TipDialog" timestamp="1587832748977">
+    <state x="496" y="254" key="com.intellij.ide.util.TipDialog" timestamp="1584280793379">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
-    <state x="496" y="254" key="com.intellij.ide.util.TipDialog/0.0.1600.860@0.0.1600.860" timestamp="1587832748977" />
-    <state x="463" y="180" width="672" height="678" key="search.everywhere.popup" timestamp="1584816203355">
+    <state x="496" y="254" key="com.intellij.ide.util.TipDialog/0.0.1600.860@0.0.1600.860" timestamp="1584280793379" />
+    <state x="463" y="180" width="672" height="678" key="search.everywhere.popup" timestamp="1582135229842">
       <screen x="0" y="0" width="1600" height="860" />
     </state>
-    <state x="463" y="180" width="672" height="678" key="search.everywhere.popup/0.0.1600.860@0.0.1600.860" timestamp="1584816203355" />
+    <state x="463" y="180" width="672" height="678" key="search.everywhere.popup/0.0.1600.860@0.0.1600.860" timestamp="1582135229842" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/and$etis.coverage" NAME="etis Coverage Results" MODIFIED="1582961893523" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
