@@ -129,7 +129,7 @@ def bot_start(message):
                         temp_counter += 1
                     print('___________________________________________temp_tables:')
                     print(temp_tables)
-                    temp_counter = 1
+                    temp_counter = 0
                     for i in table_array:
                         if i[3] == temp_tables[temp_counter][3]:
                             print(i[2] + '_' + temp_tables[temp_counter][2], '    clear')
