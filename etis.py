@@ -1,7 +1,9 @@
+
 import requests
 import os
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
+
 
 url = 'https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current'
 url_login = 'https://student.psu.ru/pls/stu_cus_et/stu.login'
@@ -11,6 +13,12 @@ headers = {
     'User-Agent': UserAgent().chrome
 }
 
+auth = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
+        'p_username'.encode('cp1251'): 'Мурзин'.encode('cp1251'),
+        'p_password'.encode('cp1251'): '568219'.encode('cp1251')}
+'''auth = {'p_redirect': 'stu.timetable',
+        'p_username': 'Мурзин',
+        'p_password': '568219'}'''
 r = ''
 soup = ''
 s = ''
@@ -23,12 +31,13 @@ count_tables = 0  # id таблицы
 count_rows = 0  # сквозной id строки
 
 
-def authentication(auth, sess):  # функция аутентификации
+def authentication(auth,sess):  # функция аутентификации
     global s, response, r
     response = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
-    if soup.text.find('2396870', 0, len(soup.text)) == -1:
+    print(soup)
+    if soup.text.find('2396870', 0, len(soup)) == -1:
         print('успешная авторизхация')
         return True
     else:
@@ -60,7 +69,9 @@ def info_scrapping(sess):  # сборка информации на страни
             count_rows += 1
             row_id += 2
         count_tables += 1
-    return table_array, table_names
+    print(table_array)
+    print(type(table_array))
+    return table_array
 
 
 def new_info_processing():
