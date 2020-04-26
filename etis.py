@@ -5,27 +5,14 @@ from bs4 import BeautifulSoup
 
 url = 'https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current'
 url_login = 'https://student.psu.ru/pls/stu_cus_et/stu.login'
-saved_data_file = 'Z:\True Seeker\Рабочий стол\\and\\saved_data.txt'
 
 headers = {
     'User-Agent': UserAgent().chrome
 }
 
-r = ''
-soup = ''
-s = ''
-response = ''
-table_names = ''
-tables = ''
-table_array = []  # массив веб данных
-file_array = []  # массив оффлайн данных
-count_tables = 0  # id таблицы
-count_rows = 0  # сквозной id строки
-
 
 def authentication(auth, sess):  # функция аутентификации
-    global s, response, r
-    response = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию
+    sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
     if soup.text.find('2396870', 0, len(soup.text)) == -1:
@@ -37,7 +24,9 @@ def authentication(auth, sess):  # функция аутентификации
 
 
 def info_scrapping(sess):  # сборка информации на странице
-    global soup, table_names, tables, table_array, file_array, count_rows, count_tables
+    table_array = []  # массив веб данных
+    count_rows = 0  # сквозной id строки
+    count_tables = 0  # id таблицы
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')  # парсинг страницы
     table_names = soup.findAll('h3')  # выделение имен всех таблиц
@@ -58,57 +47,3 @@ def info_scrapping(sess):  # сборка информации на страни
             row_id += 2
         count_tables += 1
     return table_array, table_names
-
-
-def new_info_processing():
-    global table_array
-    f = open(saved_data_file, 'w')
-    for i in table_array:
-        for j in i:
-            f.write(str(j) + '|')
-        f.write('\n')
-    f.close()
-
-
-def file_processing():
-    global file_array
-    is_first_log = False  # маркер первого захода
-    try:
-        f = open(saved_data_file, 'r')
-    except FileNotFoundError:
-        is_first_log = True
-    if is_first_log:  # еслии первый логин
-        new_info_processing()
-    else:  # если логин не первый, то делаем проверку на новые данные
-        f = open(saved_data_file, 'r')
-        data = f.readlines()
-        f.close()
-        file_array = [line.rstrip() for line in data]
-        for i in range(len(file_array)):  # это всё - чтение файла и унификация данных для последующей проверки
-            file_array[i] = file_array[i].split('|')
-            file_array[i].pop()
-        print(file_array)
-        print(table_array)
-
-
-def data_matching():
-    global file_array, table_array
-    new_data_marker = False  # флаг, что данные не совпадают
-    is_reassemble_needed = False  # если данные не совпадают, то активируем флаг и пересобираем файл
-    for i in range(len(file_array)):  # проверка на различие данных в массивах
-        for j in range(len(file_array[i])):
-            if file_array[i][j] != table_array[i][j]:
-                new_data_marker = True
-            if new_data_marker:
-                is_reassemble_needed = True
-                print('Несовпадение данных в таблице: ', file_array[i][0], ', в строке: ', file_array[i][1])
-                new_data_marker = False
-    if is_reassemble_needed:  # если найдено несовпадение, то заново собираем информацию с сайта и заносим в файл
-        os.remove(saved_data_file)
-        new_info_processing()
-
-
-'''authentication(auth)
-info_scrapping()
-file_processing()
-data_matching()'''
