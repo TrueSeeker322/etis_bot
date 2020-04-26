@@ -31,7 +31,7 @@ def start_message(message):
 @bot.message_handler(commands=['user_data'])
 def user_data_message(message):
     mes = bot.send_message(message.chat.id, (
-            'Логин: ' + login_dict[message.from_user.id] + '\n Пароль: ' + pass_dict[message.from_user.id]))
+            'Логин: ' + login_dict.get(message.from_user.id) + '\n Пароль: ' + pass_dict.get(message.from_user.id)))
     time.sleep(6)
     bot.delete_message(message.chat.id, mes.message_id)
 
@@ -80,8 +80,6 @@ def bot_start(message):
         quarry_array = '{'  # строка для вывода информации об оценках в бд
         names_array = '{'  # строка для вывода информации об предметах в бд
         table_array, table_names = info_scrapping(session_dict[message.from_user.id])
-        print('____________table_array')
-        print(table_array)
         for i in table_array:  # формирование строки querry_array
             quarry_array += '{'
             for j in i:
@@ -128,10 +126,7 @@ def bot_start(message):
                         temp_counter = 0
                         is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
                         for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
-                            if i[3] == temp_tables[temp_counter][3]:
-                                print(i[2] + '_' + temp_tables[temp_counter][2], '    clear')
-                            else:
-                                print(i[2] + '_' + temp_tables[temp_counter][2], ' НЕ СОВПАДАЕТ')
+                            if i[3] != temp_tables[temp_counter][3]:
                                 new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(temp_names[int(i[0])], i[2], i[3], i[4], i[5])
                                 is_DB_update_needed = True
                                 bot.send_message(message.chat.id, new_mark_message)
