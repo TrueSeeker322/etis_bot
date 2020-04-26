@@ -175,6 +175,7 @@ pass_dict = {}  # словарь паролей
 while True:
     for key in auth_dict:
         print(key)
-    bot.polling(none_stop=False, interval=0, timeout=20)
+    #bot.polling(none_stop=False, interval=0, timeout=20)
+    updates = bot.get_updates()
     print('Сейчас сплю')
     time.sleep(10)
