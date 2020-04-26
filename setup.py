@@ -121,7 +121,7 @@ def bot_start(message):
                         if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
                             print('Это не совпадает: ', i)
                             print('Вот с этим: ', temp_names[temp_counter])
-                            # break  # тут вставить сбор информации заново
+                            # break  # тут вставить сбор информации заново так как начало нового триместра #TODO
                         else:
                             print('clear')  # temp
                         temp_counter += 1
@@ -136,7 +136,7 @@ def bot_start(message):
                             is_DB_update_needed = True
                             bot.send_message(message.chat.id, new_mark_message)
                         temp_counter += 1
-
+                    print(table_array)
                     # TODO
     else:
         bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
