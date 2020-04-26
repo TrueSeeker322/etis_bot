@@ -172,9 +172,9 @@ password_flag_dict = {}
 session_dict = {}  # словарь всех подключений
 login_dict = {}  # словарь логинов
 pass_dict = {}  # словарь паролей
-'''while True:
+while True:
     for key in auth_dict:
         print(key)
-    bot.polling()
+    bot.polling(none_stop=False, interval=0, timeout=20)
     print('Сейчас сплю')
-    time.sleep(10)'''
+    time.sleep(10)
