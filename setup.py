@@ -80,6 +80,8 @@ def bot_start(message):
         quarry_array = '{'  # строка для вывода информации об оценках в бд
         names_array = '{'  # строка для вывода информации об предметах в бд
         table_array, table_names = info_scrapping(session_dict[message.from_user.id])
+        print('____________table_array')
+        print(table_array)
         for i in table_array:  # формирование строки querry_array
             quarry_array += '{'
             for j in i:
@@ -127,7 +129,9 @@ def bot_start(message):
                         temp_counter += 1
                     temp_counter = 0
                     is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
-                    for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что на совпадение
+                    print('____________________temp_tables')
+                    print(temp_tables)
+                    for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
                         if i[3] == temp_tables[temp_counter][3]:
                             print(i[2] + '_' + temp_tables[temp_counter][2], '    clear')
                         else:
