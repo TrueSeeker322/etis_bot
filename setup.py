@@ -136,7 +136,7 @@ def bot_start(message):
                             is_DB_update_needed = True
                             bot.send_message(message.chat.id, new_mark_message)
                         temp_counter += 1
-                    print(table_array)
+                    print(quarry_array)
                     # TODO
     else:
         bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
