@@ -177,5 +177,5 @@ while True:
         print(key)
     #bot.polling(none_stop=False, interval=0, timeout=20)
     updates = bot.get_updates()
-    print('Сейчас сплю')
+    print(updates.message)
     time.sleep(10)
