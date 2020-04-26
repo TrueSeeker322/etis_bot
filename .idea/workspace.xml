@@ -2,8 +2,31 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fdb9b49a-f8fd-4db2-ac47-aec96510e354" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/etis.py" beforeDir="false" afterPath="$PROJECT_DIR$/etis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/Activate.ps1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/activate" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/activate.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/chardetect.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/deactivate.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/easy_install-3.8-script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/easy_install-3.8.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/easy_install-3.8.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/easy_install-script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/easy_install.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/easy_install.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip-script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip3-script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip3.8-script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip3.8.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip3.8.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip3.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pip3.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/python.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/Scripts/pythonw.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/venv/pyvenv.cfg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,7 +133,7 @@
       <workItem from="1582961847960" duration="617000" />
       <workItem from="1583860953512" duration="237000" />
       <workItem from="1584279821082" duration="9588000" />
-      <workItem from="1587887065274" duration="1299000" />
+      <workItem from="1587887065274" duration="1822000" />
     </task>
     <servers />
   </component>
