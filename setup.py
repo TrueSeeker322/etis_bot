@@ -79,7 +79,7 @@ def bot_start(message):
     if auth_dict.get(message.from_user.id):
         quarry_array = '{'  # строка для вывода информации об оценках в бд
         names_array = '{'  # строка для вывода информации об предметах в бд
-        table_array, table_names = info_scrapping(session_dict[message.from_user.id])
+        table_array, table_names = info_scrapping(session_dict.get(message.from_user.id))
         for i in table_array:  # формирование строки querry_array
             quarry_array += '{'
             for j in i:
@@ -119,7 +119,8 @@ def bot_start(message):
                     temp_names = fetch[1]
                     is_new_trimester = False
                     for i in table_names:
-                        if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                        if i != temp_names[
+                            temp_counter]:  # если собранная информация по предметам не совпадает с текущей
                             is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
                         temp_counter += 1
                     if not is_new_trimester:  # если триместр не новый то проверка на совпадение
@@ -127,14 +128,16 @@ def bot_start(message):
                         is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
                         for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
                             if i[3] != temp_tables[temp_counter][3]:
-                                new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(temp_names[int(i[0])], i[2], i[3], i[4], i[5])
+                                new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
+                                    temp_names[int(i[0])], i[2], i[3], i[4], i[5])
                                 is_DB_update_needed = True
                                 bot.send_message(message.chat.id, new_mark_message)
                             temp_counter += 1
                         if is_DB_update_needed:
-                            cursor.execute("UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
-                                           {'quarry_array': quarry_array,
-                                            'tg_id': str(message.from_user.id)})
+                            cursor.execute(
+                                "UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
+                                {'quarry_array': quarry_array,
+                                 'tg_id': str(message.from_user.id)})
                             conn.commit()
                     else:  # если триместр новый то удалим старую информацию и вставим новую
                         cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
@@ -169,5 +172,8 @@ password_flag_dict = {}
 session_dict = {}  # словарь всех подключений
 login_dict = {}  # словарь логинов
 pass_dict = {}  # словарь паролей
-
-bot.polling()
+while True:
+    for key in auth_dict:
+        print(key)
+    bot.polling()
+    time.sleep(10)
