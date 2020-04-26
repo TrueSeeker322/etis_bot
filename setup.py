@@ -136,8 +136,11 @@ def bot_start(message):
                             is_DB_update_needed = True
                             bot.send_message(message.chat.id, new_mark_message)
                         temp_counter += 1
-                    print(quarry_array)
-                    # TODO
+                    #print(quarry_array)
+                    if is_DB_update_needed:
+                        cursor.execute("UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
+                                       {'quarry_array': quarry_array,
+                                        'tg_id': str(message.from_user.id)})
     else:
         bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
 
