@@ -141,6 +141,7 @@ def bot_start(message):
                         cursor.execute("UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
                                        {'quarry_array': quarry_array,
                                         'tg_id': str(message.from_user.id)})
+                        conn.commit();
     else:
         bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
 
