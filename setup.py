@@ -176,4 +176,5 @@ while True:
     for key in auth_dict:
         print(key)
     bot.polling()
+    print('Сейчас сплю')
     time.sleep(10)
