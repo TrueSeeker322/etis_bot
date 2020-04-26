@@ -52,9 +52,6 @@ def info_scrapping(sess):  # сборка информации на страни
             table_array[count_rows].append(str(count_rows))  # id строки таблицы
             table_array[count_rows].append(i.contents[row_id].contents[1].text)  # название работы
             table_array[count_rows].append(i.contents[row_id].contents[7].text)  # текущий балл
-            # if type(i.contents[row_id].contents[9].text) is not type(1):
-            # table_array[count_rows].append('0')
-            # else:
             table_array[count_rows].append(i.contents[row_id].contents[9].text)  # проходной балл
             table_array[count_rows].append(i.contents[row_id].contents[13].text)  # максимальный балл
             count_rows += 1
