@@ -119,33 +119,36 @@ def bot_start(message):
                     fetch = cursor.fetchone()
                     temp_tables = fetch[0]
                     temp_names = fetch[1]
+                    is_new_trimester = False
                     for i in table_names:
                         if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
-                            print('Это не совпадает: ', i)
-                            print('Вот с этим: ', temp_names[temp_counter])
-                            # break  # тут вставить сбор информации заново так как начало нового триместра #TODO
-                        else:
-                            print('clear')  # temp
+                            is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
                         temp_counter += 1
-                    temp_counter = 0
-                    is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
-                    print('____________________temp_tables')
-                    print(temp_tables)
-                    for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
-                        if i[3] == temp_tables[temp_counter][3]:
-                            print(i[2] + '_' + temp_tables[temp_counter][2], '    clear')
-                        else:
-                            print(i[2] + '_' + temp_tables[temp_counter][2], ' НЕ СОВПАДАЕТ')
-                            new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(temp_names[int(i[0])], i[2], i[3], i[4], i[5])
-                            is_DB_update_needed = True
-                            bot.send_message(message.chat.id, new_mark_message)
-                        temp_counter += 1
-                    #print(quarry_array)
-                    if is_DB_update_needed:
-                        cursor.execute("UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
-                                       {'quarry_array': quarry_array,
-                                        'tg_id': str(message.from_user.id)})
-                        conn.commit();
+                    if not is_new_trimester:  # если триместр не новый то проверка на совпадение
+                        temp_counter = 0
+                        is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
+                        for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
+                            if i[3] == temp_tables[temp_counter][3]:
+                                print(i[2] + '_' + temp_tables[temp_counter][2], '    clear')
+                            else:
+                                print(i[2] + '_' + temp_tables[temp_counter][2], ' НЕ СОВПАДАЕТ')
+                                new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(temp_names[int(i[0])], i[2], i[3], i[4], i[5])
+                                is_DB_update_needed = True
+                                bot.send_message(message.chat.id, new_mark_message)
+                            temp_counter += 1
+                        if is_DB_update_needed:
+                            cursor.execute("UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
+                                           {'quarry_array': quarry_array,
+                                            'tg_id': str(message.from_user.id)})
+                            conn.commit()
+                    else:  # если триместр новый то удалим старую информацию и вставим новую
+                        cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
+                                       {'tg_id': str(message.from_user.id)})
+                        cursor.execute(
+                            "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
+                            {'tg_id': str(message.from_user.id), 'table_array': quarry_array,
+                             'table_names': names_array})
+                        conn.commit()
     else:
         bot.send_message(message.chat.id, 'Авторизация не пройдена. /authorize')
 
