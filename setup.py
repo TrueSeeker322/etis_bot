@@ -154,8 +154,8 @@ if __name__ == '__main__':
 
     run(updater)
     while True:
-        for i in auth_dict:
-            if auth_dict.get(i):
+        for user_auth in auth_dict:
+            if auth_dict.get(user_auth):
                 quarry_array = '{'  # строка для вывода информации об оценках в бд
                 names_array = '{'  # строка для вывода информации об предметах в бд
                 table_array, table_names = info_scrapping(session_dict.get(i))
