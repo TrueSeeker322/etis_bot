@@ -3,6 +3,8 @@ import time
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 from etis import *
+import psycopg2
+from contextlib import closing
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
@@ -150,5 +152,5 @@ login_dict = {}  # словарь логинов
 pass_dict = {}  # словарь паролей
 
 while True:
-    print('Кэжуально делаю дела, пока принимаю сообщения')
+    print('Тупа работаю')
     time.sleep(6)
