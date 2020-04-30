@@ -156,6 +156,7 @@ if __name__ == '__main__':
     while True:
         for user_auth in auth_dict:
             if auth_dict.get(user_auth):
+                print('проверяю юзера ', user_auth)
                 quarry_array = '{'  # строка для вывода информации об оценках в бд
                 names_array = '{'  # строка для вывода информации об предметах в бд
                 table_array, table_names = info_scrapping(session_dict.get(user_auth))
