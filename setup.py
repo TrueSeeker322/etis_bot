@@ -209,7 +209,7 @@ if __name__ == '__main__':
                                         new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
                                             temp_names[int(i[0])], i[2], i[3], i[4], i[5])
                                         is_DB_update_needed = True
-                                        updater.bot.send_message(message.chat.id, new_mark_message)
+                                        updater.bot.send_message(chat_dict[user_auth], new_mark_message)
                                     temp_counter += 1
                                 if is_DB_update_needed:
                                     cursor.execute(
