@@ -72,6 +72,13 @@ def login_handler(bot, update):
     login_flag_dict[update.message.from_user.id] = True
 
 
+def user_data_message(bot, update):
+    mes = update.message.reply_text(
+        'Логин: ' + login_dict.get(update.message.from_user.id) + '\n Пароль: ' + pass_dict.get(update.message.from_user.id))
+    time.sleep(6)
+    bot.delete_message(chat_id=update.message.chat.id, message_id=update.message.message_id)
+
+
 def text_handler(bot, update):
     if login_flag_dict.get(update.message.from_user.id):
         login_dict[update.message.from_user.id] = update.message.text
