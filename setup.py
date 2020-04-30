@@ -110,7 +110,7 @@ def auth_handler(bot, update):
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id]})
                     conn.commit()
-            update.message.reply_text('Вход успешен. Для запуска работы бота нажмите /bot_start: ')
+            update.message.reply_text('Вход успешен.\n Бот начал свою работу. Для отключения бота введите /stop: ')
             auth_dict[update.message.from_user.id] = True
             chat_dict[update.message.from_user.id] = update.message.chat_id
         else:
@@ -119,6 +119,10 @@ def auth_handler(bot, update):
                                       'просмотра введённых данных нажмите /user_data')
             auth_dict[update.message.from_user.id] = False
             chat_dict[update.message.from_user.id] = update.message.chat_id
+
+
+def stop_handler(bot, update):
+    auth_dict[update.message.from_user.id] = False
 
 
 def text_handler(bot, update):
@@ -150,6 +154,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("login", login_handler))
     updater.dispatcher.add_handler(CommandHandler("user_data", user_data_handler))
     updater.dispatcher.add_handler(CommandHandler("authorize", auth_handler))
+    updater.dispatcher.add_handler(CommandHandler("stop", stop_handler))
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
@@ -226,4 +231,5 @@ if __name__ == '__main__':
                                     {'tg_id': str(user_auth), 'table_array': quarry_array,
                                      'table_names': names_array})
                                 conn.commit()
-        time.sleep(6)
+        # TODO Добавить переаутентификацию
+        time.sleep(300)
