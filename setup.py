@@ -60,7 +60,7 @@ def pass_encrypt(password):
 def pass_decrypt(encrypted):
     f = Fernet(PASSKEY)
     decrypted = f.decrypt(encrypted)
-    print('Пароль: ', decrypted)
+    print('Пароль: ', str(decrypted))
     return str(decrypted)
 
 
