@@ -191,15 +191,14 @@ if __name__ == '__main__':
                             conn.commit()
                         else:  # если в бд есть такая запись, то проверим на сходство данных
                             cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
-                                           {'tg_id': str(i)})
+                                           {'tg_id': str(user_auth)})
                             temp_counter = 0
                             fetch = cursor.fetchone()
                             temp_tables = fetch[0]
                             temp_names = fetch[1]
                             is_new_trimester = False
                             for i in table_names:
-                                if i != temp_names[
-                                    temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                                if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
                                     is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
                                 temp_counter += 1
                             if not is_new_trimester:  # если триместр не новый то проверка на совпадение
