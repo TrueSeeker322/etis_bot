@@ -54,13 +54,13 @@ PASSKEY = os.environ["PASS_KEY"].encode()
 def pass_encrypt(password):
     f = Fernet(PASSKEY)
     encrypted = f.encrypt(password.encode())
+    print('encr: ',encrypted)
     return encrypted
 
 
 def pass_decrypt(encrypted):
     f = Fernet(PASSKEY)
     decrypted = f.decrypt(encrypted)
-    print('Пароль: ', decrypted.decode('utf-8'))
     return decrypted.decode('utf-8')
 
 
@@ -246,4 +246,6 @@ if __name__ == '__main__':
                                      'table_names': names_array})
                                 conn.commit()
         # TODO Добавить переаутентификацию
+        print('Жду')
+        print('____________________________________________________')
         time.sleep(300)
