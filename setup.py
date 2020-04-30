@@ -76,7 +76,7 @@ def user_data_handler(bot, update):
     mes = update.message.reply_text(
         'Логин: ' + login_dict.get(update.message.from_user.id) + '\n Пароль: ' + pass_dict.get(update.message.from_user.id))
     time.sleep(6)
-    bot.delete_message(chat_id=update.message.chat.id, message_id=update.message.message_id)
+    bot.delete_message(chat_id=update.message.chat.id, message_id=mes.message_id)
 
 
 def text_handler(bot, update):
