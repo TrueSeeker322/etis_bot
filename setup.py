@@ -112,11 +112,13 @@ def auth_handler(bot, update):
                     conn.commit()
             update.message.reply_text('Вход успешен. Для запуска работы бота нажмите /bot_start: ')
             auth_dict[update.message.from_user.id] = True
+            chat_dict[update.message.from_user.id] = update.message.chat_id
         else:
             del session_dict[update.message.from_user.id]
             update.message.reply_text('Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                       'просмотра введённых данных нажмите /user_data')
             auth_dict[update.message.from_user.id] = False
+            chat_dict[update.message.from_user.id] = update.message.chat_id
 
 
 def text_handler(bot, update):
@@ -133,6 +135,14 @@ def text_handler(bot, update):
         update.message.reply_text('Для авторизации нажмите /authorize')
 
 
+auth_dict = {}  # словарь с подключениями для пользователей
+chat_dict = {}  # словарь с id чатов
+login_flag_dict = {}
+password_flag_dict = {}
+session_dict = {}  # словарь всех подключений
+login_dict = {}  # словарь логинов
+pass_dict = {}  # словарь паролей
+
 if __name__ == '__main__':
     updater = Updater(TOKEN)
 
@@ -143,14 +153,77 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
-
-auth_dict = {}
-login_flag_dict = {}
-password_flag_dict = {}
-session_dict = {}  # словарь всех подключений
-login_dict = {}  # словарь логинов
-pass_dict = {}  # словарь паролей
-
-while True:
-    print('Тупа работаю')
-    time.sleep(6)
+    while True:
+        for i in auth_dict:
+            if auth_dict.get(i):
+                quarry_array = '{'  # строка для вывода информации об оценках в бд
+                names_array = '{'  # строка для вывода информации об предметах в бд
+                table_array, table_names = info_scrapping(session_dict.get(i))
+                for i in table_array:  # формирование строки querry_array
+                    quarry_array += '{'
+                    for j in i:
+                        j = j.replace('"', '*')
+                        quarry_array += '"' + j + '", '
+                    quarry_array = quarry_array[:len(quarry_array) - 1]
+                    quarry_array = quarry_array[:len(quarry_array) - 1]
+                    quarry_array += '}, '
+                quarry_array = quarry_array[:len(quarry_array) - 1]
+                quarry_array = quarry_array[:len(quarry_array) - 1]
+                quarry_array += '}'
+                for i in table_names:  # формирование строки names_array
+                    i = i.replace('"', '*')
+                    i = i.replace("'", '*')
+                    names_array += '"' + i + '", '
+                names_array = names_array[:len(names_array) - 1]
+                names_array = names_array[:len(names_array) - 1]
+                names_array += '}'
+                with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
+                    with conn.cursor() as cursor:
+                        cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
+                                       {'tg_id': str(i)})
+                        if not cursor.fetchone():  # если в бд еще нет такой записи
+                            cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
+                                           {'tg_id': str(i)})
+                            cursor.execute(
+                                "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
+                                {'tg_id': str(i), 'table_array': quarry_array,
+                                 'table_names': names_array})
+                            conn.commit()
+                        else:  # если в бд есть такая запись, то проверим на сходство данных
+                            cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
+                                           {'tg_id': str(i)})
+                            temp_counter = 0
+                            fetch = cursor.fetchone()
+                            temp_tables = fetch[0]
+                            temp_names = fetch[1]
+                            is_new_trimester = False
+                            for i in table_names:
+                                if i != temp_names[
+                                    temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                                    is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
+                                temp_counter += 1
+                            if not is_new_trimester:  # если триместр не новый то проверка на совпадение
+                                temp_counter = 0
+                                is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
+                                for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
+                                    if i[3] != temp_tables[temp_counter][3]:
+                                        new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
+                                            temp_names[int(i[0])], i[2], i[3], i[4], i[5])
+                                        is_DB_update_needed = True
+                                        updater.bot.send_message(message.chat.id, new_mark_message)
+                                    temp_counter += 1
+                                if is_DB_update_needed:
+                                    cursor.execute(
+                                        "UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
+                                        {'quarry_array': quarry_array,
+                                         'tg_id': str(i)})
+                                    conn.commit()
+                            else:  # если триместр новый то удалим старую информацию и вставим новую
+                                cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
+                                               {'tg_id': str(i)})
+                                cursor.execute(
+                                    "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
+                                    {'tg_id': str(i), 'table_array': quarry_array,
+                                     'table_names': names_array})
+                                conn.commit()
+        time.sleep(6)

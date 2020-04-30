@@ -119,8 +119,7 @@ def bot_start(message):
                     temp_names = fetch[1]
                     is_new_trimester = False
                     for i in table_names:
-                        if i != temp_names[
-                            temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                        if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
                             is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
                         temp_counter += 1
                     if not is_new_trimester:  # если триместр не новый то проверка на совпадение
