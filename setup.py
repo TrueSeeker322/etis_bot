@@ -60,8 +60,8 @@ def pass_encrypt(password):
 def pass_decrypt(encrypted):
     f = Fernet(PASSKEY)
     decrypted = f.decrypt(encrypted)
-    print('Пароль: ', decrypted.encode('utf-8'))
-    return decrypted.encode('utf-8')
+    print('Пароль: ', decrypted.decode('utf-8'))
+    return decrypted.decode('utf-8')
 
 
 def run(updater):
