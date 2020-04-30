@@ -1,2 +1,2 @@
-web: python setup.py
+web: newrelic-admin run-program python setup.py
 
