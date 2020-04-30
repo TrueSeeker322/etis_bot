@@ -72,7 +72,7 @@ def login_handler(bot, update):
     login_flag_dict[update.message.from_user.id] = True
 
 
-def user_data_message(bot, update):
+def user_data_handler(bot, update):
     mes = update.message.reply_text(
         'Логин: ' + login_dict.get(update.message.from_user.id) + '\n Пароль: ' + pass_dict.get(update.message.from_user.id))
     time.sleep(6)
@@ -98,6 +98,7 @@ if __name__ == '__main__':
 
     updater.dispatcher.add_handler(CommandHandler("start", start_handler))
     updater.dispatcher.add_handler(CommandHandler("login", login_handler))
+    updater.dispatcher.add_handler(CommandHandler("user_data", user_data_handler))
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
