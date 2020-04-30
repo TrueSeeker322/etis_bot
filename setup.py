@@ -73,7 +73,7 @@ def auth_handler(bot, update):
                                    {'tg_id': str(update.message.from_user.id)})
                     if not cursor.fetchall():
                         cursor.execute(
-                            "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass, auth, session_time) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s),%(auth)s),%(session_time)s);",
+                            "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass, auth, session_time) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s,%(auth)s),%(session_time)s);",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id],
@@ -82,7 +82,7 @@ def auth_handler(bot, update):
                         cursor.execute('SELECT * FROM tg_user_data;')
                     else:
                         cursor.execute(
-                            "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;",
+                            "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s, auth = %(auth)s, session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id],
