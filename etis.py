@@ -3,6 +3,7 @@ import os
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 
+
 url = 'https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current'
 url_login = 'https://student.psu.ru/pls/stu_cus_et/stu.login'
 
@@ -16,7 +17,7 @@ def authentication(auth, sess):  # функция аутентификации
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
     if soup.text.find('2396870', 0, len(soup.text)) == -1:
-        print('успешная авторизация ')
+        print('успешная авторизация')
         return True
     else:
         print('провальная авторизация')

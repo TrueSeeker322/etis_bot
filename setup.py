@@ -1,10 +1,10 @@
 import os
 import time
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from etis import *
 import psycopg2
 from contextlib import closing
+from cryptography.fernet import Fernet
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
@@ -48,6 +48,19 @@ while True:
     bot.send_message(473056406,'99')
     time.sleep(6)'''
 TOKEN = os.environ.get('BOT_TOKEN')
+PASSKEY = os.environ["PASS_KEY"].encode()
+
+
+def pass_encrypt(password):
+    f = Fernet(PASSKEY)
+    encrypted = f.encrypt(password.encode())
+    return encrypted
+
+
+def pass_decrypt(encrypted):
+    f = Fernet(PASSKEY)
+    decrypted = f.decrypt(encrypted.encode())
+    return decrypted
 
 
 def run(updater):
@@ -89,7 +102,7 @@ def auth_handler(bot, update):
     else:
         auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
                      'p_username'.encode('cp1251'): login_dict[update.message.from_user.id].encode('cp1251'),
-                     'p_password'.encode('cp1251'): pass_dict[update.message.from_user.id].encode('cp1251')}
+                     'p_password'.encode('cp1251'): pass_decrypt(pass_dict[update.message.from_user.id]).encode('cp1251')}
         session_dict[update.message.from_user.id] = requests.Session()  # добавление подключения в словарь
         if authentication(auth_data, session_dict[update.message.from_user.id]):
             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
@@ -101,14 +114,14 @@ def auth_handler(bot, update):
                             "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s);",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
-                             'etis_pass': pass_dict[update.message.from_user.id]})
+                             'etis_pass': pass_decrypt(pass_dict[update.message.from_user.id])})
                         cursor.execute('SELECT * FROM tg_user_data;')
                     else:
                         cursor.execute(
                             "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s WHERE tg_id= %(tg_id)s;",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
-                             'etis_pass': pass_dict[update.message.from_user.id]})
+                             'etis_pass': pass_decrypt(pass_dict[update.message.from_user.id])})
                     conn.commit()
             update.message.reply_text('Вход успешен.\n Бот начал свою работу. Для отключения бота введите /stop: ')
             auth_dict[update.message.from_user.id] = True
@@ -132,7 +145,7 @@ def text_handler(bot, update):
         bot.send_message(update.message.chat.id, 'Введите пароль: ')
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
-        pass_dict[update.message.from_user.id] = update.message.text
+        pass_dict[update.message.from_user.id] = pass_encrypt(update.message.text)
         password_flag_dict[update.message.from_user.id] = False
         update.message.reply_text('Для просмотра введённых данных нажмите /user_data')
         update.message.reply_text('Для повторного ввода данных нажмите /login')
