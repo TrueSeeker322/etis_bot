@@ -158,7 +158,7 @@ if __name__ == '__main__':
             if auth_dict.get(user_auth):
                 quarry_array = '{'  # строка для вывода информации об оценках в бд
                 names_array = '{'  # строка для вывода информации об предметах в бд
-                table_array, table_names = info_scrapping(session_dict.get(i))
+                table_array, table_names = info_scrapping(session_dict.get(user_auth))
                 for i in table_array:  # формирование строки querry_array
                     quarry_array += '{'
                     for j in i:
@@ -180,13 +180,13 @@ if __name__ == '__main__':
                 with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
                     with conn.cursor() as cursor:
                         cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
-                                       {'tg_id': str(i)})
+                                       {'tg_id': str(user_auth)})
                         if not cursor.fetchone():  # если в бд еще нет такой записи
                             cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
-                                           {'tg_id': str(i)})
+                                           {'tg_id': str(user_auth)})
                             cursor.execute(
                                 "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
-                                {'tg_id': str(i), 'table_array': quarry_array,
+                                {'tg_id': str(user_auth), 'table_array': quarry_array,
                                  'table_names': names_array})
                             conn.commit()
                         else:  # если в бд есть такая запись, то проверим на сходство данных
@@ -216,14 +216,14 @@ if __name__ == '__main__':
                                     cursor.execute(
                                         "UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
                                         {'quarry_array': quarry_array,
-                                         'tg_id': str(i)})
+                                         'tg_id': str(user_auth)})
                                     conn.commit()
                             else:  # если триместр новый то удалим старую информацию и вставим новую
                                 cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
-                                               {'tg_id': str(i)})
+                                               {'tg_id': str(user_auth)})
                                 cursor.execute(
                                     "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
-                                    {'tg_id': str(i), 'table_array': quarry_array,
+                                    {'tg_id': str(user_auth), 'table_array': quarry_array,
                                      'table_names': names_array})
                                 conn.commit()
         time.sleep(6)
