@@ -115,8 +115,6 @@ def text_handler(bot, update):
     if login_flag_dict.get(update.message.from_user.id):
         login_dict[update.message.from_user.id] = update.message.text
         login_flag_dict[update.message.from_user.id] = False
-        print('type')
-        print(type(update.message.from_user.id))
         bot.send_message(update.message.chat.id, 'Введите пароль: ')
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
@@ -252,7 +250,7 @@ if __name__ == '__main__':
                                             new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
                                                 temp_names[int(i[0])], i[2], i[3], i[4], i[5])
                                             is_DB_update_needed = True
-                                            updater.bot.send_message(chat_dict[str(user_auth)], new_mark_message)
+                                            updater.bot.send_message(chat_dict[int(user_auth)], new_mark_message)
                                         temp_counter += 1
                                     if is_DB_update_needed:
                                         cursor.execute(
