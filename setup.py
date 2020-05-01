@@ -153,9 +153,13 @@ if __name__ == '__main__':
                                 cursor.execute("SELECT etis_login, etis_pass FROM tg_user_data WHERE tg_id = %(tg_id)s",
                                                {'tg_id': str(user_auth)})
                                 fetch = cursor.fetchone()
+                                print('Логин')
+                                print(fetch[0])
+                                print('Пароль')
+                                print(fetch[1])
                                 auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
                                              'p_username'.encode('cp1251'): fetch[0].encode('cp1251'),
-                                             'p_password'.encode('cp1251'): pass_decrypt(fetch[1].encode()).encode('cp1251')}
+                                             'p_password'.encode('cp1251'): pass_decrypt(fetch[1]).encode('cp1251')}
                                 session_dict[user_auth] = requests.Session()  # добавление подключения в словарь
                         if authentication(auth_data, session_dict[user_auth]):
                             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
