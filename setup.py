@@ -110,6 +110,8 @@ def text_handler(bot, update):
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
         pass_dict[update.message.from_user.id] = pass_encrypt(update.message.text)
+        print('Введённый пасс')
+        print(pass_dict[update.message.from_user.id])
         password_flag_dict[update.message.from_user.id] = False
         update.message.reply_text('Для просмотра введённых данных нажмите /user_data')
         update.message.reply_text('Для повторного ввода данных нажмите /login')
@@ -159,7 +161,7 @@ if __name__ == '__main__':
                                 print(fetch[1])
                                 auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
                                              'p_username'.encode('cp1251'): fetch[0].encode('cp1251'),
-                                             'p_password'.encode('cp1251'): pass_decrypt(fetch[1]).encode('cp1251')}
+                                             'p_password'.encode('cp1251'): pass_decrypt(fetch[1].encode()).encode('cp1251')}
                                 session_dict[user_auth] = requests.Session()  # добавление подключения в словарь
                         if authentication(auth_data, session_dict[user_auth]):
                             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
