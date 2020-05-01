@@ -168,7 +168,8 @@ if __name__ == '__main__':
                                 with conn.cursor() as cursor:
                                     cursor.execute(
                                         "UPDATE tg_user_data SET session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
-                                        {'session_time': str(time.time())})
+                                        {'session_time': str(time.time()),
+                                         'tg_id': str(user_auth)})
                         else:
                             print('ШОТО НЕ ТАК')
                             continue  #  TODO поставить обработчик неправильного логина, неотвечающего сервера и опроса
