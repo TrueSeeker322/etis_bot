@@ -115,6 +115,8 @@ def text_handler(bot, update):
     if login_flag_dict.get(update.message.from_user.id):
         login_dict[update.message.from_user.id] = update.message.text
         login_flag_dict[update.message.from_user.id] = False
+        print('type')
+        print(type(update.message.from_user.id))
         bot.send_message(update.message.chat.id, 'Введите пароль: ')
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
