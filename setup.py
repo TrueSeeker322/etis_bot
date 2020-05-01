@@ -155,8 +155,8 @@ if __name__ == '__main__':
                 if line[1]:
                     auth_dict[int(line[0])] = True
                     with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn2:
-                        with conn.cursor() as cursor2:
-                            cursor.execute(
+                        with conn2.cursor() as cursor2:
+                            cursor2.execute(
                                 "UPDATE tg_user_data SET session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
                                 {'session_time': str(0),
                                  'tg_id': str(line[0])})
