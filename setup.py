@@ -119,8 +119,6 @@ def text_handler(bot, update):
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
         pass_dict[update.message.from_user.id] = pass_encrypt(update.message.text)
-        print('Введённый пасс')
-        print(pass_dict[update.message.from_user.id])
         password_flag_dict[update.message.from_user.id] = False
         update.message.reply_text('Для просмотра введённых данных нажмите /user_data')
         update.message.reply_text('Для повторного ввода данных нажмите /login')
@@ -174,7 +172,7 @@ if __name__ == '__main__':
                                            {'tg_id': str(user_auth)})
                             fetch = cursor.fetchone()
                     if time.time() - fetch[0] > SESSION_TIMEOUT:  # если последняя сессия была более 40 минут назад
-                        print('Обновляю сессию')
+                        print('Обновляю сессию', user_auth)
                         with closing(
                                 psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # то аутентификация заново
                             with conn.cursor() as cursor:
@@ -241,8 +239,7 @@ if __name__ == '__main__':
                                 temp_names = fetch[1]
                                 is_new_trimester = False
                                 for i in table_names:
-                                    if i != temp_names[
-                                        temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                                    if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
                                         is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
                                     temp_counter += 1
                                 if not is_new_trimester:  # если триместр не новый то проверка на совпадение
@@ -253,7 +250,7 @@ if __name__ == '__main__':
                                             new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
                                                 temp_names[int(i[0])], i[2], i[3], i[4], i[5])
                                             is_DB_update_needed = True
-                                            updater.bot.send_message(chat_dict[user_auth], new_mark_message)
+                                            updater.bot.send_message(chat_dict[str(user_auth)], new_mark_message)
                                         temp_counter += 1
                                     if is_DB_update_needed:
                                         cursor.execute(
