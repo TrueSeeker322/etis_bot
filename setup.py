@@ -147,6 +147,7 @@ if __name__ == '__main__':
                                            {'tg_id': str(user_auth)})
                             fetch = cursor.fetchone()
                     if time.time() - fetch[0] > 0:  # TODO поменять на SESSION_TIMEOUT если последняя сессия была более 40 минут назад
+                        print('Обновляю сессию')
                         with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  #  то аутентификация заново
                             with conn.cursor() as cursor:
                                 cursor.execute("SELECT etis_login, etis_pass FROM tg_user_data WHERE tg_id = %(tg_id)s",
