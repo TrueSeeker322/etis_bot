@@ -143,6 +143,13 @@ if __name__ == '__main__':
         try:
             for user_auth in auth_dict:  # пробегаем всех пользователей
                 if auth_dict.get(user_auth):  # если у  него включен бот
+                    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
+                        with conn.cursor() as cursor:
+                            cursor.execute("SELECT session_time FROM tg_user_data WHERE tg_id = %(tg_id)s",
+                                           {'tg_id': str(user_auth)})
+                            fetch = cursor.fetchone()
+                            print('Вот тут фетч')
+                            print(fetch)
                     if True:#(time.time() - session_time_dict.get(user_auth)).seconds > 2400:  # если последняя сессия была более 40 минут назад
                         print('TODO')
                     else:
