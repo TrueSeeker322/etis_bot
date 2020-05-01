@@ -1,7 +1,7 @@
 import os
 import time
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import etis
+from etis import *
 import psycopg2
 from contextlib import closing
 from cryptography.fernet import Fernet
