@@ -12,7 +12,6 @@ DATABASE_URL = os.environ['DATABASE_URL']
 TOKEN = os.environ['BOT_TOKEN']
 PASSKEY = os.environ["PASS_KEY"].encode()
 APP_NAME = os.environ['APP_NAME']
-RECHECK_TIME = 300  # время пазуы между проверками
 SESSION_TIMEOUT = 2400  # время сброса сессии
 
 
@@ -28,12 +27,12 @@ def pass_decrypt(encrypted):
     return decrypted.decode('utf-8')
 
 
-def run(updater):
+def run(updater_local):
     PORT = int(os.environ.get("PORT", "8443"))
-    updater.start_webhook(listen="0.0.0.0",
-                          port=PORT,
-                          url_path=TOKEN)
-    updater.bot.set_webhook(APP_NAME + TOKEN)
+    updater_local.start_webhook(listen="0.0.0.0",
+                                port=PORT,
+                                url_path=TOKEN)
+    updater_local.bot.set_webhook(APP_NAME + TOKEN)
 
 
 def start_handler(bot, update):
@@ -54,24 +53,22 @@ def login_handler(bot, update):
 def user_data_handler(bot, update):
     mes = update.message.reply_text(
         'Сообщение удалится через 5 секунд\nЛогин: ' + login_dict.get(
-            update.message.from_user.id) + '\nПароль: ' + pass_decrypt(pass_dict.get(
-            update.message.from_user.id)))
+            update.message.from_user.id) + '\nПароль: ' + pass_decrypt(pass_dict.get(update.message.from_user.id)))
     time.sleep(6)
     bot.delete_message(chat_id=update.message.chat.id, message_id=mes.message_id)
 
 
 def stop_handler(bot, update):
     auth_dict[update.message.from_user.id] = False
-    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
-        with conn.cursor() as cursor:
-            cursor.execute("UPDATE tg_user_data SET auth = %(auth)s WHERE tg_id= %(tg_id)s;",
-                           {'tg_id': str(update.message.from_user.id),
-                            'auth': 'False'})
-            conn.commit()
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Проверям время последней сессии
+        with conn_local.cursor() as cursor_local:
+            cursor_local.execute("UPDATE tg_user_data SET auth = %(auth)s WHERE tg_id= %(tg_id)s;",
+                                 {'tg_id': str(update.message.from_user.id),
+                                  'auth': 'False'})
+            conn_local.commit()
     update.message.reply_text('Вы успешно отписались от уведомлений\nЧтобы включить бота заново, введите /login')
 
 
-# noinspection SqlResolve
 def auth_handler(bot, update):
     if login_dict.get(update.message.from_user.id) == 'Не введён' or \
             login_dict.get(update.message.from_user.id) is None or \
@@ -79,34 +76,34 @@ def auth_handler(bot, update):
             pass_dict.get(update.message.from_user.id) is None:
         bot.send_message(update.message.chat.id, 'Не ввёден логин или пароль. /login')
     else:
-        auth_data = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
-                     'p_username'.encode('cp1251'): login_dict[update.message.from_user.id].encode('cp1251'),
-                     'p_password'.encode('cp1251'): pass_decrypt(pass_dict[update.message.from_user.id]).encode(
-                         'cp1251')}
+        auth_data_local = {'p_redirect'.encode('cp1251'): 'stu.timetable'.encode('cp1251'),
+                           'p_username'.encode('cp1251'): login_dict[update.message.from_user.id].encode('cp1251'),
+                           'p_password'.encode('cp1251'): pass_decrypt(pass_dict[update.message.from_user.id]).encode(
+                               'cp1251')}
         session_dict[update.message.from_user.id] = requests.Session()  # добавление подключения в словарь
-        if authentication(auth_data, session_dict[update.message.from_user.id]):
-            with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
-                with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;",
-                                   {'tg_id': str(update.message.from_user.id)})
-                    if not cursor.fetchall():
-                        cursor.execute(
+        if authentication(auth_data_local, session_dict[update.message.from_user.id]):
+            with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
+                with conn_local.cursor() as cursor_local:
+                    cursor_local.execute("SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;",
+                                         {'tg_id': str(update.message.from_user.id)})
+                    if not cursor_local.fetchall():
+                        cursor_local.execute(
                             "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass, auth, session_time) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s,%(auth)s, %(session_time)s);",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id].decode('utf-8'),
                              'auth': 'True',
                              'session_time': str(time.time())})
-                        cursor.execute('SELECT * FROM tg_user_data;')
+                        cursor_local.execute('SELECT * FROM tg_user_data;')
                     else:
-                        cursor.execute(
+                        cursor_local.execute(
                             "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s, auth = %(auth)s, session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id].decode('utf-8'),
                              'auth': 'True',
                              'session_time': str(time.time())})
-                    conn.commit()
+                    conn_local.commit()
             update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop')
             auth_dict[update.message.from_user.id] = True
         else:
@@ -159,7 +156,8 @@ if __name__ == '__main__':
 
     run(updater)
 
-    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # При старте бота, добавляем в словарь аутентификации всех, кто включил бота
+    with closing(psycopg2.connect(DATABASE_URL,
+                                  sslmode='require')) as conn:  # При старте бота, добавляем в словарь аутентификации всех, кто включил бота
         with conn.cursor() as cursor:
             cursor.execute("SELECT tg_id, auth FROM tg_user_data")
             for line in cursor:
@@ -174,7 +172,6 @@ if __name__ == '__main__':
                             conn2.commit()
 
     while True:
-        # TODO добавить в бд данные из auth_dict и брать их оттуда при старте бота
         try:
             for user_auth in auth_dict:  # пробегаем всех пользователей
                 if auth_dict.get(user_auth):  # если у  него включен бот
@@ -209,7 +206,7 @@ if __name__ == '__main__':
                             print('ШОТО НЕ ТАК')
                             continue  # TODO поставить обработчик неправильного логина, неотвечающего сервера и опроса
                     print('проверяю юзера ', user_auth)
-                    quarry_array = '{'  # строка для вывода информации об оценках в бд
+                    quarry_array = '{'  # строка для вывода информации об оценках в бд РАБОТАЕТ НЕ ТРОГАЙ
                     names_array = '{'  # строка для вывода информации об предметах в бд
                     table_array, table_names = info_scrapping(session_dict.get(user_auth))
                     for i in table_array:  # формирование строки querry_array
@@ -251,8 +248,8 @@ if __name__ == '__main__':
                                 temp_tables = fetch[0]
                                 temp_names = fetch[1]
                                 is_new_trimester = False
-                                for i in table_names:
-                                    if i != temp_names[temp_counter]:  # если собранная информация по предметам не совпадает с текущей
+                                for i in table_names:  # если собранная информация по предметам не совпадает с текущей
+                                    if i != temp_names[temp_counter]:
                                         is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
                                     temp_counter += 1
                                 if not is_new_trimester:  # если триместр не новый то проверка на совпадение
@@ -286,4 +283,4 @@ if __name__ == '__main__':
         print('____________________________________________________')
         ss = requests.Session()
         ss.get(APP_NAME)
-        time.sleep(RECHECK_TIME)
+        time.sleep(int(os.environ['RECHEK_TIME']))
