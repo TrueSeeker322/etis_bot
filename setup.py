@@ -84,20 +84,22 @@ def auth_handler(bot, update):
                                    {'tg_id': str(update.message.from_user.id)})
                     if not cursor.fetchall():
                         cursor.execute(
-                            "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass, auth, session_time) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s,%(auth)s, %(session_time)s);",
+                            "INSERT INTO tg_user_data(tg_id, etis_login, etis_pass, auth, session_time) VALUES (%(tg_id)s,%(etis_login)s,%(etis_pass)s,%(auth)s, %(session_time)s, %(chat_id)s);",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id].decode('utf-8'),
                              'auth': 'True',
+                             'chat_id': str(update.message.chat_id),
                              'session_time': str(time.time())})
                         cursor.execute('SELECT * FROM tg_user_data;')
                     else:
                         cursor.execute(
-                            "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s, auth = %(auth)s, session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
+                            "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s, auth = %(auth)s, session_time = %(session_time)s, chat_id = %(chat_id)s WHERE tg_id= %(tg_id)s;",
                             {'tg_id': str(update.message.from_user.id),
                              'etis_login': login_dict[update.message.from_user.id],
                              'etis_pass': pass_dict[update.message.from_user.id].decode('utf-8'),
                              'auth': 'True',
+                             'chat_id': str(update.message.chat_id),
                              'session_time': str(time.time())})
                     conn.commit()
             update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop: ')
@@ -148,10 +150,11 @@ if __name__ == '__main__':
 
     with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # При старте бота, добавляем в словарь аутентификации всех, кто включил бота
         with conn.cursor() as cursor:
-            cursor.execute("SELECT tg_id, auth FROM tg_user_data")
+            cursor.execute("SELECT tg_id, auth, chat_id FROM tg_user_data")
             for line in cursor:
                 if line[1]:
                     auth_dict[int(line[0])] = True
+                    #chat_dict[int(line[0])] = int(line[2])
                     with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn2:
                         with conn2.cursor() as cursor2:
                             cursor2.execute(
