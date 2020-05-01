@@ -40,7 +40,7 @@ def start_handler(bot, update):
     custom_keyboard = [['/login', '/help']]
     reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
     bot.send_message(chat_id=update.message.from_user.id,
-                     text='Привет! Этот бот поможет тебе не пропустить новые оценки в ЕТИСе!\n Нажмите /login для ввода логина и пароля\nНажми /help для вывода справки',
+                     text='Привет! Этот бот поможет тебе не пропустить новые оценки в ЕТИСе!\nНажмите /login для ввода логина и пароля\nНажми /help для вывода справки',
                      reply_markup=reply_markup)
 
 
@@ -68,6 +68,7 @@ def stop_handler(bot, update):
                            {'tg_id': str(update.message.from_user.id),
                             'auth': 'False'})
             conn.commit()
+    update.message.reply_text('Вы успешно отписались от уведомлений\nЧтобы включить бота заново, введите /login')
 
 
 # noinspection SqlResolve
