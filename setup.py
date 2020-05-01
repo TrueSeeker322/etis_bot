@@ -47,10 +47,19 @@ def login_handler(bot, update):
 
 def user_data_handler(bot, update):
     mes = update.message.reply_text(
-        'Логин: ' + login_dict.get(update.message.from_user.id) + '\n Пароль: ' + pass_dict.get(
-            update.message.from_user.id))
+        'Сообщение удалится через 5 секунд\nЛогин: ' + login_dict.get(update.message.from_user.id) + '\n Пароль: ' + pass_decrypt(pass_dict.get(
+            update.message.from_user.id)))
     time.sleep(6)
     bot.delete_message(chat_id=update.message.chat.id, message_id=mes.message_id)
+
+
+def stop_handler(bot, update):
+    auth_dict[update.message.from_user.id] = False
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE tg_user_data SET auth = %(auth)s WHERE tg_id= %(tg_id)s;",
+                            {'tg_id': str(update.message.from_user.id),
+                             'auth': 'False'})
 
 
 # noinspection SqlResolve
@@ -99,10 +108,6 @@ def auth_handler(bot, update):
             chat_dict[update.message.from_user.id] = update.message.chat_id
 
 
-def stop_handler(bot, update):
-    auth_dict[update.message.from_user.id] = False
-
-
 def text_handler(bot, update):
     if login_flag_dict.get(update.message.from_user.id):
         login_dict[update.message.from_user.id] = update.message.text
@@ -140,7 +145,12 @@ if __name__ == '__main__':
 
     run(updater)
 
-
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT tg_id, auth FROM tg_user_data")
+            for line in cursor:
+                if line[1]:
+                    auth_dict[int(line[0])] = True
 
     while True:
         # TODO добавить в бд данные из auth_dict и брать их оттуда при старте бота
@@ -178,7 +188,6 @@ if __name__ == '__main__':
                             print('ШОТО НЕ ТАК')
                             continue  # TODO поставить обработчик неправильного логина, неотвечающего сервера и опроса
                     print('проверяю юзера ', user_auth)
-                    print(type(user_auth))
                     quarry_array = '{'  # строка для вывода информации об оценках в бд
                     names_array = '{'  # строка для вывода информации об предметах в бд
                     table_array, table_names = info_scrapping(session_dict.get(user_auth))
