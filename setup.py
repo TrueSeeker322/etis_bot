@@ -1,5 +1,6 @@
 import os
 import time
+import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from etis import *
 import psycopg2
@@ -10,6 +11,7 @@ import requests
 DATABASE_URL = os.environ['DATABASE_URL']
 TOKEN = os.environ['BOT_TOKEN']
 PASSKEY = os.environ["PASS_KEY"].encode()
+APP_NAME = os.environ['APP_NAME']
 RECHECK_TIME = 300  # время пазуы между проверками
 SESSION_TIMEOUT = 2400  # время сброса сессии
 
@@ -31,11 +33,15 @@ def run(updater):
     updater.start_webhook(listen="0.0.0.0",
                           port=PORT,
                           url_path=TOKEN)
-    updater.bot.set_webhook(os.environ.get('APP_NAME') + TOKEN)
+    updater.bot.set_webhook(APP_NAME + TOKEN)
 
 
 def start_handler(bot, update):
-    update.message.reply_text('Привет! Нажмите /login для ввода логина и пароля')
+    custom_keyboard = [['/login', '/help']]
+    reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
+    bot.send_message(chat_id=update.message.from_user.id,
+                     text='Привет! Этот бот поможет тебе не пропустить новые оценки в ЕТИСе!\n Нажмите /login для ввода логина и пароля\nНажми /help для вывода справки',
+                     reply_markup=reply_markup)
 
 
 def login_handler(bot, update):
@@ -100,7 +106,7 @@ def auth_handler(bot, update):
                              'auth': 'True',
                              'session_time': str(time.time())})
                     conn.commit()
-            update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop: ')
+            update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop')
             auth_dict[update.message.from_user.id] = True
         else:
             del session_dict[update.message.from_user.id]
@@ -109,13 +115,19 @@ def auth_handler(bot, update):
             auth_dict[update.message.from_user.id] = False
 
 
+def help_handler(bot, update):
+    update.message.reply_text('Бот призван помочь студентам вовремя узнавать об оценках в их личном кабинете. '
+                              'Чтобы бот начал работу, введите /login. После этого введи логин от личного кабинета.'
+                              'Затем введи свой пароль. Не переживай, пароли хранятся в зашифрованном виде.'
+                              'Если всё в порядке и данные введены верно, то бот оповестит тебя о начале работы.'
+                              'Чтобы перестать получать уведомления введи /stop')  # TODO добавить отчет об ошибке
+
+
 def text_handler(bot, update):
     if login_flag_dict.get(update.message.from_user.id):
         login_dict[update.message.from_user.id] = update.message.text
         login_flag_dict[update.message.from_user.id] = False
         bot.send_message(update.message.chat.id, 'Введите пароль: ')
-        print('chatid')
-        print(update.message.chat.id)
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
         pass_dict[update.message.from_user.id] = pass_encrypt(update.message.text)
@@ -141,6 +153,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("user_data", user_data_handler))
     updater.dispatcher.add_handler(CommandHandler("authorize", auth_handler))
     updater.dispatcher.add_handler(CommandHandler("stop", stop_handler))
+    updater.dispatcher.add_handler(CommandHandler("help", help_handler))
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
@@ -246,6 +259,7 @@ if __name__ == '__main__':
                                     is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
                                     for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
                                         if i[3] != temp_tables[temp_counter][3]:
+                                            print('Отправляю новую оценку', user_auth)
                                             new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
                                                 temp_names[int(i[0])], i[2], i[3], i[4], i[5])
                                             is_DB_update_needed = True
@@ -269,4 +283,6 @@ if __name__ == '__main__':
             print('RuntimeError')
         print('Жду')
         print('____________________________________________________')
+        ss = requests.Session()
+        ss.get(APP_NAME)
         time.sleep(RECHECK_TIME)
