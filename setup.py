@@ -140,12 +140,7 @@ if __name__ == '__main__':
 
     run(updater)
 
-'''    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT tg_id, auth FROM tg_user_data")
-            for line in cursor:
-                if line[1]:
-                    auth_dict[line[0]] = True'''
+
 
     while True:
         # TODO добавить в бд данные из auth_dict и брать их оттуда при старте бота
