@@ -1,7 +1,7 @@
 import os
 import time
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from etis import *
+import etis
 import psycopg2
 from contextlib import closing
 from cryptography.fernet import Fernet
@@ -10,6 +10,7 @@ import requests
 DATABASE_URL = os.environ['DATABASE_URL']
 TOKEN = os.environ['BOT_TOKEN']
 PASSKEY = os.environ["PASS_KEY"].encode()
+TIMEOUT = 15  # время пазуы между проверками
 
 
 def pass_encrypt(password):
@@ -149,7 +150,7 @@ if __name__ == '__main__':
                                            {'tg_id': str(user_auth)})
                             fetch = cursor.fetchone()
                             print('Вот тут фетч')
-                            print(fetch)
+                            print(fetch[0])
                     if True:#(time.time() - session_time_dict.get(user_auth)).seconds > 2400:  # если последняя сессия была более 40 минут назад
                         print('TODO')
                     else:
@@ -229,4 +230,4 @@ if __name__ == '__main__':
         # TODO Добавить переаутентификацию
         print('Жду')
         print('____________________________________________________')
-        time.sleep(15)
+        time.sleep(TIMEOUT)
