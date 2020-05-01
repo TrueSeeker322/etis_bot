@@ -13,6 +13,7 @@ PASSKEY = os.environ["PASS_KEY"].encode()
 RECHECK_TIME = 15  # время пазуы между проверками
 SESSION_TIMEOUT = 2400  # время сброса сессии
 
+
 def pass_encrypt(password):
     f = Fernet(PASSKEY)
     encrypted = f.encrypt(password.encode())
@@ -87,7 +88,7 @@ def auth_handler(bot, update):
                              'auth': 'True',
                              'session_time': str(time.time())})
                     conn.commit()
-            update.message.reply_text('Вход успешен.\n Бот начал свою работу. Для отключения бота введите /stop: ')
+            update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop: ')
             auth_dict[update.message.from_user.id] = True
             chat_dict[update.message.from_user.id] = update.message.chat_id
         else:
@@ -138,6 +139,14 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
+
+'''    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT tg_id, auth FROM tg_user_data")
+            for line in cursor:
+                if line[1]:
+                    auth_dict[line[0]] = True'''
+
     while True:
         # TODO добавить в бд данные из auth_dict и брать их оттуда при старте бота
         try:
@@ -148,7 +157,7 @@ if __name__ == '__main__':
                             cursor.execute("SELECT session_time FROM tg_user_data WHERE tg_id = %(tg_id)s",
                                            {'tg_id': str(user_auth)})
                             fetch = cursor.fetchone()
-                    if time.time() - fetch[0] > SESSION_TIMEOUT:  # TODO поменять на SESSION_TIMEOUT если последняя сессия была более 40 минут назад
+                    if time.time() - fetch[0] > SESSION_TIMEOUT:  # если последняя сессия была более 40 минут назад
                         print('Обновляю сессию')
                         with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  #  то аутентификация заново
                             with conn.cursor() as cursor:
@@ -172,8 +181,9 @@ if __name__ == '__main__':
                                          'tg_id': str(user_auth)})
                         else:
                             print('ШОТО НЕ ТАК')
-                            continue  #  TODO поставить обработчик неправильного логина, неотвечающего сервера и опроса
+                            continue  # TODO поставить обработчик неправильного логина, неотвечающего сервера и опроса
                     print('проверяю юзера ', user_auth)
+                    print(type(user_auth))
                     quarry_array = '{'  # строка для вывода информации об оценках в бд
                     names_array = '{'  # строка для вывода информации об предметах в бд
                     table_array, table_names = info_scrapping(session_dict.get(user_auth))
@@ -246,7 +256,6 @@ if __name__ == '__main__':
                                     conn.commit()
         except RuntimeError:
             print('RuntimeError')
-        # TODO Добавить переаутентификацию
         print('Жду')
         print('____________________________________________________')
         time.sleep(RECHECK_TIME)
