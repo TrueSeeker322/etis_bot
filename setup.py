@@ -118,6 +118,8 @@ def text_handler(bot, update):
         login_dict[update.message.from_user.id] = update.message.text
         login_flag_dict[update.message.from_user.id] = False
         bot.send_message(update.message.chat.id, 'Введите пароль: ')
+        print('chatid')
+        print(update.message.chat.id)
         password_flag_dict[update.message.from_user.id] = True
     elif password_flag_dict.get(update.message.from_user.id):
         pass_dict[update.message.from_user.id] = pass_encrypt(update.message.text)
