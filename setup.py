@@ -10,7 +10,7 @@ import requests
 DATABASE_URL = os.environ['DATABASE_URL']
 TOKEN = os.environ['BOT_TOKEN']
 PASSKEY = os.environ["PASS_KEY"].encode()
-RECHECK_TIME = 15  # время пазуы между проверками
+RECHECK_TIME = 300  # время пазуы между проверками
 SESSION_TIMEOUT = 2400  # время сброса сессии
 
 
@@ -48,7 +48,7 @@ def login_handler(bot, update):
 def user_data_handler(bot, update):
     mes = update.message.reply_text(
         'Сообщение удалится через 5 секунд\nЛогин: ' + login_dict.get(
-            update.message.from_user.id) + '\n Пароль: ' + pass_decrypt(pass_dict.get(
+            update.message.from_user.id) + '\nПароль: ' + pass_decrypt(pass_dict.get(
             update.message.from_user.id)))
     time.sleep(6)
     bot.delete_message(chat_id=update.message.chat.id, message_id=mes.message_id)
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
     run(updater)
 
-    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # При старте бота, добавляем в словарь аутентификации всех, кто включил бота
         with conn.cursor() as cursor:
             cursor.execute("SELECT tg_id, auth FROM tg_user_data")
             for line in cursor:
