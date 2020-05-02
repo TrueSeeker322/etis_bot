@@ -13,13 +13,15 @@ headers = {
 
 
 def authentication(auth, sess):  # функция аутентификации
-    sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
+    code = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
+    if str(code) != '<Response [200]>':
+        return 2
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
     if soup.text.find('2396870', 0, len(soup.text)) == -1:
-        return True
+        return 1
     else:
-        return False
+        return 0
 
 
 def info_scrapping(sess):  # сборка информации на странице

@@ -70,6 +70,14 @@ def stop_handler(bot, update):
     update.message.reply_text('Вы успешно отписались от уведомлений\nЧтобы включить бота заново, введите /login')
 
 
+def help_handler(bot, update):
+    update.message.reply_text('Бот призван помочь студентам вовремя узнавать об оценках в их личном кабинете. '
+                              'Чтобы бот начал работу, введите /login. После этого введи логин от личного кабинета.'
+                              'Затем введи свой пароль. Не переживай, пароли хранятся в зашифрованном виде.'
+                              'Если всё в порядке и данные введены верно, то бот оповестит тебя о начале работы.'
+                              'Чтобы перестать получать уведомления введи /stop')
+
+
 def auth_handler(bot, update):
     if login_dict.get(update.message.from_user.id) == 'Не введён' or \
             login_dict.get(update.message.from_user.id) is None or \
@@ -82,7 +90,8 @@ def auth_handler(bot, update):
                            'p_password'.encode('cp1251'): pass_decrypt(pass_dict[update.message.from_user.id]).encode(
                                'cp1251')}
         session_dict[update.message.from_user.id] = requests.Session()  # добавление подключения в словарь
-        if authentication(auth_data_local, session_dict[update.message.from_user.id]):
+        auth_result_local = authentication(auth_data_local, session_dict[update.message.from_user.id])
+        if auth_result_local == 1:
             print('успешная авторизация ', update.message.from_user.id)
             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
                 with conn_local.cursor() as cursor_local:
@@ -108,20 +117,14 @@ def auth_handler(bot, update):
                     conn_local.commit()
             update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop')
             auth_dict[update.message.from_user.id] = True
-        else:
+        elif auth_result_local == 0:
             print('провальная авторизация', update.message.from_user.id)
             del session_dict[update.message.from_user.id]
             update.message.reply_text('Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                       'просмотра введённых данных нажмите /user_data')
             auth_dict[update.message.from_user.id] = False
-
-
-def help_handler(bot, update):
-    update.message.reply_text('Бот призван помочь студентам вовремя узнавать об оценках в их личном кабинете. '
-                              'Чтобы бот начал работу, введите /login. После этого введи логин от личного кабинета.'
-                              'Затем введи свой пароль. Не переживай, пароли хранятся в зашифрованном виде.'
-                              'Если всё в порядке и данные введены верно, то бот оповестит тебя о начале работы.'
-                              'Чтобы перестать получать уведомления введи /stop')  # TODO добавить отчет об ошибке
+        else:
+            update.message.reply_text('Серверы ЕТИС в данный момент недоступны, попробуйте позже')
 
 
 def text_handler(bot, update):
@@ -197,7 +200,8 @@ if __name__ == '__main__':
                                              'p_password'.encode('cp1251'): pass_decrypt(fetch[1].encode()).encode(
                                                  'cp1251')}
                                 session_dict[user_auth] = requests.Session()  # добавление подключения в словарь
-                        if authentication(auth_data, session_dict[user_auth]):
+                        auth_result = authentication(auth_data, session_dict[user_auth])
+                        if auth_result == 1:
                             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
                                 with conn.cursor() as cursor:
                                     cursor.execute(
@@ -205,9 +209,20 @@ if __name__ == '__main__':
                                         {'session_time': str(time.time()),
                                          'tg_id': str(user_auth)})
                                     conn.commit()
+                        elif auth_result == 0:
+                            print('Данные пользователя ', user_auth, ' устарели')
+                            updater.bot.send_message(int(user_auth), 'Данные для входа в ЕТИС устарели, пожалуйста, введите обновленные данные /login')
+                            with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Выключаем бота для этого пользователя
+                                with conn.cursor() as cursor:
+                                    cursor.execute(
+                                        "UPDATE tg_user_data SET auth = %(auth)s WHERE tg_id= %(tg_id)s;",
+                                        {'tg_id': str(user_auth),
+                                         'auth': 'False'})
+                                    conn.commit()
+                            continue
                         else:
-                            print('ШОТО НЕ ТАК')
-                            continue  # TODO поставить обработчик неправильного логина, неотвечающего сервера и опроса
+                            print('Сервера ЕТИС недоступны')
+                            time.sleep(RECHECK_TIME)
                     print('проверяю юзера ', user_auth)
                     quarry_array = '{'  # строка для вывода информации об оценках в бд РАБОТАЕТ НЕ ТРОГАЙ
                     names_array = '{'  # строка для вывода информации об предметах в бд
