@@ -12,7 +12,7 @@ headers = {
 }
 
 
-def authentication(auth, sess):  # функция аутентификации
+def authentication(auth, sess):  # функция аутентификации 
     code = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
     if str(code) != '<Response [200]>':
         return 2
