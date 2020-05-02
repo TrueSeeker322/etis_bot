@@ -155,7 +155,6 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("authorize", auth_handler))
     updater.dispatcher.add_handler(CommandHandler("stop", stop_handler))
     updater.dispatcher.add_handler(CommandHandler("help", help_handler))
-    updater.dispatcher.add_handler(CommandHandler("report", report_handler))
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
