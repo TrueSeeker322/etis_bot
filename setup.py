@@ -13,7 +13,7 @@ TOKEN = os.environ['BOT_TOKEN']
 PASSKEY = os.environ["PASS_KEY"].encode()
 APP_NAME = os.environ['APP_NAME']
 RECHECK_TIME = int(os.environ['RECHECK_TIME'])
-SESSION_TIMEOUT = int(os.environ['SESSION_TIMEOUT'])  # время сброса сессии
+SESSION_TIMEOUT = int(os.environ['SESSION_TIMEOUT'])
 
 
 def pass_encrypt(password):  # шифрование пароля
@@ -298,7 +298,7 @@ if __name__ == '__main__':
         except RuntimeError:
             print('RuntimeError')
         print('Жду')
-        print('____________________________________________________')
+        print('_____________________________________________________')
         ss = requests.Session()
         ss.get(APP_NAME)
         time.sleep(RECHECK_TIME)
