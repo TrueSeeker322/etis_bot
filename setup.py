@@ -12,16 +12,17 @@ DATABASE_URL = os.environ['DATABASE_URL']
 TOKEN = os.environ['BOT_TOKEN']
 PASSKEY = os.environ["PASS_KEY"].encode()
 APP_NAME = os.environ['APP_NAME']
-SESSION_TIMEOUT = 2400  # время сброса сессии
+RECHECK_TIME = int(os.environ['RECHECK_TIME'])
+SESSION_TIMEOUT = int(os.environ['SESSION_TIMEOUT'])  # время сброса сессии
 
 
-def pass_encrypt(password):
+def pass_encrypt(password):  # шифрование пароля
     f = Fernet(PASSKEY)
     encrypted = f.encrypt(password.encode())
     return encrypted
 
 
-def pass_decrypt(encrypted):
+def pass_decrypt(encrypted):  # дешифрование пароля
     f = Fernet(PASSKEY)
     decrypted = f.decrypt(encrypted)
     return decrypted.decode('utf-8')
@@ -82,6 +83,7 @@ def auth_handler(bot, update):
                                'cp1251')}
         session_dict[update.message.from_user.id] = requests.Session()  # добавление подключения в словарь
         if authentication(auth_data_local, session_dict[update.message.from_user.id]):
+            print('успешная авторизация ', update.message.from_user.id)
             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
                 with conn_local.cursor() as cursor_local:
                     cursor_local.execute("SELECT * FROM tg_user_data WHERE tg_id = %(tg_id)s;",
@@ -107,6 +109,7 @@ def auth_handler(bot, update):
             update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop')
             auth_dict[update.message.from_user.id] = True
         else:
+            print('провальная авторизация', update.message.from_user.id)
             del session_dict[update.message.from_user.id]
             update.message.reply_text('Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
                                       'просмотра введённых данных нажмите /user_data')
@@ -152,6 +155,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("authorize", auth_handler))
     updater.dispatcher.add_handler(CommandHandler("stop", stop_handler))
     updater.dispatcher.add_handler(CommandHandler("help", help_handler))
+    updater.dispatcher.add_handler(CommandHandler("report", report_handler))
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
 
     run(updater)
@@ -283,4 +287,4 @@ if __name__ == '__main__':
         print('____________________________________________________')
         ss = requests.Session()
         ss.get(APP_NAME)
-        time.sleep(int(os.environ['RECHEK_TIME']))
+        time.sleep(RECHECK_TIME)
