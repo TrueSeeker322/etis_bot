@@ -12,7 +12,7 @@ headers = {
 }
 
 
-def authentication(auth, sess):  # функция аутентификации 
+def authentication(auth, sess):  # функция аутентификации
     code = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
     if str(code) != '<Response [200]>':
         return 2
@@ -38,13 +38,13 @@ def info_scrapping(sess):  # сборка информации на страни
         row_id = 4
         for j in range(rows_max - 1):
             table_array.append([])
-            table_array[count_rows].append(str(count_tables))  # id таблицы
-            table_array[count_rows].append(str(count_rows))  # id строки таблицы
+            table_array[count_rows].append(str(table_names[count_tables]))  # название предмета
             table_array[count_rows].append(i.contents[row_id].contents[1].text)  # название работы
             table_array[count_rows].append(i.contents[row_id].contents[7].text)  # текущий балл
             table_array[count_rows].append(i.contents[row_id].contents[9].text)  # проходной балл
             table_array[count_rows].append(i.contents[row_id].contents[13].text)  # максимальный балл
+            table_array[count_rows].append(i.contents[row_id].contents[17]['title'])  # дата выставления оценки
             count_rows += 1
             row_id += 2
         count_tables += 1
-    return table_array, table_names
+    return table_array

@@ -55,7 +55,7 @@ def user_data_handler(bot, update):
     mes = update.message.reply_text(
         'Сообщение удалится через 5 секунд\nЛогин: ' + login_dict.get(
             update.message.from_user.id) + '\nПароль: ' + pass_decrypt(pass_dict.get(update.message.from_user.id)))
-    time.sleep(6)
+    time.sleep(5)
     bot.delete_message(chat_id=update.message.chat.id, message_id=mes.message_id)
 
 
@@ -91,6 +91,7 @@ def auth_handler(bot, update):
                                'cp1251')}
         session_dict[update.message.from_user.id] = requests.Session()  # добавление подключения в словарь
         auth_result_local = authentication(auth_data_local, session_dict[update.message.from_user.id])
+        info_scrapping(session_dict.get(update.message.from_user.id))
         if auth_result_local == 1:
             print('успешная авторизация ', update.message.from_user.id)
             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
@@ -180,7 +181,7 @@ if __name__ == '__main__':
     while True:
         try:
             for user_auth in auth_dict:  # пробегаем всех пользователей
-                if auth_dict.get(user_auth):  # если у  него включен бот
+                if auth_dict.get(user_auth):  # если у него включен бот
                     with closing(psycopg2.connect(DATABASE_URL,
                                                   sslmode='require')) as conn:  # Проверям время последней сессии
                         with conn.cursor() as cursor:
@@ -224,81 +225,55 @@ if __name__ == '__main__':
                             print('Сервера ЕТИС недоступны')
                             time.sleep(RECHECK_TIME)
                     print('проверяю юзера ', user_auth)
-                    quarry_array = '{'  # строка для вывода информации об оценках в бд РАБОТАЕТ НЕ ТРОГАЙ
-                    names_array = '{'  # строка для вывода информации об предметах в бд
-                    table_array, table_names = info_scrapping(session_dict.get(user_auth))
-                    for i in table_array:  # формирование строки querry_array
-                        quarry_array += '{'
-                        for j in i:
-                            j = j.replace('"', '*')
-                            quarry_array += '"' + j + '", '
-                        quarry_array = quarry_array[:len(quarry_array) - 1]
-                        quarry_array = quarry_array[:len(quarry_array) - 1]
-                        quarry_array += '}, '
-                    quarry_array = quarry_array[:len(quarry_array) - 1]
-                    quarry_array = quarry_array[:len(quarry_array) - 1]
-                    quarry_array += '}'
-                    for i in table_names:  # формирование строки names_array
-                        i = i.replace('"', '*')
-                        i = i.replace("'", '*')
-                        names_array += '"' + i + '", '
-                    names_array = names_array[:len(names_array) - 1]
-                    names_array = names_array[:len(names_array) - 1]
-                    names_array += '}'
-                    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
-                        with conn.cursor() as cursor:
-                            cursor.execute("SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
-                                           {'tg_id': str(user_auth)})
-                            if not cursor.fetchone():  # если в бд еще нет такой записи
-                                cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
-                                               {'tg_id': str(user_auth)})
-                                cursor.execute(
-                                    "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
-                                    {'tg_id': str(user_auth), 'table_array': quarry_array,
-                                     'table_names': names_array})
-                                conn.commit()
-                            else:  # если в бд есть такая запись, то проверим на сходство данных
-                                cursor.execute(
-                                    "SELECT table_array, table_names FROM user_tables WHERE tg_id = %(tg_id)s",
-                                    {'tg_id': str(user_auth)})
-                                temp_counter = 0
+
+                    table_array = info_scrapping(session_dict.get(user_auth))
+                    for i in table_array:
+                        subject = i[0]
+                        control_point = i[1]
+                        current_mark = i[2]
+                        passing_mark = i[3]
+                        max_mark = i[4]
+                        date = i[5]
+                        with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
+                            with conn.cursor() as cursor:
+                                cursor.execute("SELECT current_mark, date FROM user_tables WHERE tg_id = %(tg_id)s AND subject = %(subject)s AND control_point = %(control_point)s",
+                                               {'tg_id': str(user_auth),
+                                                'subject': subject,
+                                                'control_point':control_point})
                                 fetch = cursor.fetchone()
-                                temp_tables = fetch[0]
-                                temp_names = fetch[1]
-                                is_new_trimester = False
-                                for i in table_names:  # если собранная информация по предметам не совпадает с текущей
-                                    if i != temp_names[temp_counter]:
-                                        is_new_trimester = True  # флаг нового триместра, если True значит только обновляем инфу о новых предметах и не проверяем на совпадение
-                                    temp_counter += 1
-                                if not is_new_trimester:  # если триместр не новый то проверка на совпадение
-                                    temp_counter = 0
-                                    is_DB_update_needed = False  # нужно ли обновить БД с новыми оценками
-                                    for i in table_array:  # проверям сохраненную информацию и ту, которую спарсили только что, на совпадение
-                                        if i[3] != temp_tables[temp_counter][3]:
-                                            print('Отправляю новую оценку', user_auth)
-                                            new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
-                                                temp_names[int(i[0])], i[2], i[3], i[4], i[5])
-                                            is_DB_update_needed = True
-                                            updater.bot.send_message(int(user_auth), new_mark_message)
-                                        temp_counter += 1
-                                    if is_DB_update_needed:
-                                        cursor.execute(
-                                            "UPDATE user_tables SET table_array = %(quarry_array)s WHERE tg_id = %(tg_id)s",
-                                            {'quarry_array': quarry_array,
-                                             'tg_id': str(user_auth)})
-                                        conn.commit()
-                                else:  # если триместр новый то удалим старую информацию и вставим новую
-                                    cursor.execute("DELETE FROM user_tables WHERE tg_id = %(tg_id)s",
-                                                   {'tg_id': str(user_auth)})
+                                if fetch is None:  # если в бд еще нет такой записи
                                     cursor.execute(
-                                        "INSERT INTO user_tables(tg_id,table_array,table_names) VALUES (%(tg_id)s,%(table_array)s,%(table_names)s)",
-                                        {'tg_id': str(user_auth), 'table_array': quarry_array,
-                                         'table_names': names_array})
+                                        "INSERT INTO user_tables(tg_id, subject, control_point, current_mark, passing_mark, max_mark, date) VALUES (%(tg_id)s,%(subject)s,%(control_point)s,%(current_mark)s,%(passing_mark)s,%(max_mark)s, %(date)s)",
+                                        {'tg_id': str(user_auth),
+                                         'subject': subject,
+                                         'control_point': control_point,
+                                         'current_mark': current_mark,
+                                         'passing_mark': passing_mark,
+                                         'max_mark': max_mark,
+                                         'date': date})
                                     conn.commit()
+                                else:  # если в бд есть такая запись, то проверим на сходство данных
+                                    temp_counter = 0
+                                    current_mark_to_verify = fetch[0]
+                                    date_to_verify = fetch[1]
+                                    is_new_trimester = False  # TODO обработчик нового триместра
+                                    if (current_mark != current_mark_to_verify) or (date != str(date_to_verify)):
+                                        print('Отправляю новую оценку', user_auth)
+                                        new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
+                                            subject, control_point, current_mark, passing_mark, max_mark)
+                                        updater.bot.send_message(int(user_auth), new_mark_message)
+                                        cursor.execute(
+                                            "UPDATE user_tables SET current_mark = %(current_mark)s, date = %(date)s WHERE tg_id = %(tg_id)s AND subject = %(subject)s AND control_point = %(control_point)s",
+                                            {'tg_id': str(user_auth),
+                                             'subject': subject,
+                                             'control_point': control_point,
+                                             'current_mark': current_mark,
+                                             'date': date})
+                                        conn.commit()
         except RuntimeError:
             print('RuntimeError')
         print('Жду')
-        print('_____________________________________________________')
+        print('____________________________________________________')
         ss = requests.Session()
         ss.get(APP_NAME)
         time.sleep(RECHECK_TIME)
