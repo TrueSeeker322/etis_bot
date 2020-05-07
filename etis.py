@@ -3,7 +3,6 @@ import os
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 
-
 url = 'https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current'
 url_login = 'https://student.psu.ru/pls/stu_cus_et/stu.login'
 
@@ -14,14 +13,16 @@ headers = {
 
 def authentication(auth, sess):  # функция аутентификации
     code = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
-    if str(code) != '<Response [200]>':
-        return 2
+    #if str(code) != '<Response [200]>':
+    #   return 2
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
-    if soup.text.find('2396870', 0, len(soup.text)) == -1:
-        return 1
+    if soup.text.find('2396870', 0, len(soup.text)) != -1:
+        return 0  # логин или пароль не верны
+    elif soup.text.find('управление вузом', 0, len(soup.text)) != -1:
+        return 1  # вход успешен
     else:
-        return 0
+        return 2  # что-то с серверами
 
 
 def info_scrapping(sess):  # сборка информации на странице
@@ -31,6 +32,23 @@ def info_scrapping(sess):  # сборка информации на страни
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')  # парсинг страницы
     table_names = soup.findAll('h3')  # выделение имен всех таблиц
+    a = soup.findAll('span', attrs={'class': 'submenu-item'})
+    b = soup.findAll('a', attrs={'class': 'dashed'})
+    trimester_names = []
+    trimester = ''
+    for i in b:  # циклы для выделения номера текущего триместра
+        i = i.text.replace('\n', '')
+        trimester_names.append(i)
+    for i in a:
+        i = i.text.replace('\n', '')
+        if i not in trimester_names and i != 'оценки в триместре':
+            for j in i:
+                if j != ' ':
+                    trimester += j
+                else:
+                    break
+            if trimester != '':
+                break
     table_names = [head.get_text() for head in table_names]  # выделение имен всех таблиц
     tables = soup.findAll('table', attrs={'class': 'common'})  # выделение всех таблиц
     for i in tables:  # формирование массива со строками таблицы оценок
@@ -44,6 +62,7 @@ def info_scrapping(sess):  # сборка информации на страни
             table_array[count_rows].append(i.contents[row_id].contents[9].text)  # проходной балл
             table_array[count_rows].append(i.contents[row_id].contents[13].text)  # максимальный балл
             table_array[count_rows].append(i.contents[row_id].contents[17]['title'])  # дата выставления оценки
+            table_array[count_rows].append(trimester)  # номер триместра
             count_rows += 1
             row_id += 2
         count_tables += 1

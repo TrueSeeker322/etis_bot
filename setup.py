@@ -91,7 +91,6 @@ def auth_handler(bot, update):
                                'cp1251')}
         session_dict[update.message.from_user.id] = requests.Session()  # добавление подключения в словарь
         auth_result_local = authentication(auth_data_local, session_dict[update.message.from_user.id])
-        info_scrapping(session_dict.get(update.message.from_user.id))
         if auth_result_local == 1:
             print('успешная авторизация ', update.message.from_user.id)
             with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
@@ -118,6 +117,7 @@ def auth_handler(bot, update):
                     conn_local.commit()
             update.message.reply_text('Вход успешен.\nБот начал свою работу. Для отключения бота введите /stop')
             auth_dict[update.message.from_user.id] = True
+            info_processing(update.message.from_user.id, bot)
         elif auth_result_local == 0:
             print('провальная авторизация', update.message.from_user.id)
             del session_dict[update.message.from_user.id]
@@ -142,6 +142,76 @@ def text_handler(bot, update):
         update.message.reply_text('Для авторизации нажмите /authorize')
 
 
+def info_processing(user_auth_local, bot_local):
+    table_array = info_scrapping(session_dict.get(user_auth_local))
+    trim = ''
+    for i in table_array:
+        subject = i[0]
+        control_point = i[1]
+        current_mark = i[2]
+        passing_mark = i[3]
+        max_mark = i[4]
+        date = i[5]
+        trim = i[6]
+        with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
+            with conn_local.cursor() as cursor_local:
+                cursor_local.execute(
+                    "SELECT current_mark, date FROM user_tables WHERE tg_id = %(tg_id)s AND subject = %(subject)s AND control_point = %(control_point)s",
+                    {'tg_id': str(user_auth_local),
+                     'subject': subject,
+                     'control_point': control_point})
+                fetch_local = cursor_local.fetchone()
+                if fetch_local is None:  # если в бд еще нет такой записи
+                    cursor_local.execute(
+                        "INSERT INTO user_tables(tg_id, subject, control_point, current_mark, passing_mark, max_mark, date, trim) VALUES (%(tg_id)s,%(subject)s,%(control_point)s,%(current_mark)s,%(passing_mark)s,%(max_mark)s, %(date)s, %(trim)s)",
+                        {'tg_id': str(user_auth_local),
+                         'subject': subject,
+                         'control_point': control_point,
+                         'current_mark': current_mark,
+                         'passing_mark': passing_mark,
+                         'max_mark': max_mark,
+                         'date': date,
+                         'trim': trim})
+                    conn_local.commit()
+                else:  # если в бд есть такая запись, то проверим на сходство данных
+                    current_mark_to_verify = fetch_local[0]
+                    date_to_verify = fetch_local[1]
+                    if (current_mark != current_mark_to_verify) or (date != str(date_to_verify)):
+                        print('Отправляю новую оценку', user_auth_local)
+                        new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
+                            subject, control_point, current_mark, passing_mark, max_mark)
+                        bot_local.send_message(int(user_auth_local), new_mark_message)
+                        cursor_local.execute(
+                            "UPDATE user_tables SET current_mark = %(current_mark)s, date = %(date)s WHERE tg_id = %(tg_id)s AND subject = %(subject)s AND control_point = %(control_point)s",
+                            {'tg_id': str(user_auth_local),
+                             'subject': subject,
+                             'control_point': control_point,
+                             'current_mark': current_mark,
+                             'date': date})
+                        conn_local.commit()
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # удаляем записи о старых триместрах
+        with conn_local.cursor() as cursor_local:
+            cursor_local.execute(
+                "SELECT DISTINCT trim FROM user_tables WHERE tg_id = %(tg_id)s",
+                {'tg_id': str(user_auth_local)})
+            fetch_local = cursor_local.fetchone()
+            if fetch_local[0] is not None:
+                for trim_to_verify in fetch_local:
+                    if int(trim) > int(trim_to_verify):
+                        trim_to_delete = trim_to_verify
+                    elif int(trim) < int(trim_to_verify):
+                        trim_to_delete = trim
+                    else:
+                        trim_to_delete = None
+                    if trim_to_delete is not None:
+                        print('удаляю ', trim_to_delete)
+                        cursor_local.execute(
+                            "DELETE FROM user_tables WHERE tg_id = %(tg_id)s AND trim = %(trim)s",
+                            {'tg_id': str(user_auth_local),
+                             'trim': trim_to_delete})
+                        conn_local.commit()
+
+
 auth_dict = {}  # словарь с подключениями для пользователей
 session_time_dict = {}  # словаь времени начала сессии
 login_flag_dict = {}
@@ -160,9 +230,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("stop", stop_handler))
     updater.dispatcher.add_handler(CommandHandler("help", help_handler))
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
-
     run(updater)
-
     with closing(psycopg2.connect(DATABASE_URL,
                                   sslmode='require')) as conn:  # При старте бота, добавляем в словарь аутентификации всех, кто включил бота
         with conn.cursor() as cursor:
@@ -225,51 +293,7 @@ if __name__ == '__main__':
                             print('Сервера ЕТИС недоступны')
                             time.sleep(RECHECK_TIME)
                     print('проверяю юзера ', user_auth)
-
-                    table_array = info_scrapping(session_dict.get(user_auth))
-                    for i in table_array:
-                        subject = i[0]
-                        control_point = i[1]
-                        current_mark = i[2]
-                        passing_mark = i[3]
-                        max_mark = i[4]
-                        date = i[5]
-                        with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Обновление БД
-                            with conn.cursor() as cursor:
-                                cursor.execute("SELECT current_mark, date FROM user_tables WHERE tg_id = %(tg_id)s AND subject = %(subject)s AND control_point = %(control_point)s",
-                                               {'tg_id': str(user_auth),
-                                                'subject': subject,
-                                                'control_point':control_point})
-                                fetch = cursor.fetchone()
-                                if fetch is None:  # если в бд еще нет такой записи
-                                    cursor.execute(
-                                        "INSERT INTO user_tables(tg_id, subject, control_point, current_mark, passing_mark, max_mark, date) VALUES (%(tg_id)s,%(subject)s,%(control_point)s,%(current_mark)s,%(passing_mark)s,%(max_mark)s, %(date)s)",
-                                        {'tg_id': str(user_auth),
-                                         'subject': subject,
-                                         'control_point': control_point,
-                                         'current_mark': current_mark,
-                                         'passing_mark': passing_mark,
-                                         'max_mark': max_mark,
-                                         'date': date})
-                                    conn.commit()
-                                else:  # если в бд есть такая запись, то проверим на сходство данных
-                                    temp_counter = 0
-                                    current_mark_to_verify = fetch[0]
-                                    date_to_verify = fetch[1]
-                                    is_new_trimester = False  # TODO обработчик нового триместра
-                                    if (current_mark != current_mark_to_verify) or (date != str(date_to_verify)):
-                                        print('Отправляю новую оценку', user_auth)
-                                        new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
-                                            subject, control_point, current_mark, passing_mark, max_mark)
-                                        updater.bot.send_message(int(user_auth), new_mark_message)
-                                        cursor.execute(
-                                            "UPDATE user_tables SET current_mark = %(current_mark)s, date = %(date)s WHERE tg_id = %(tg_id)s AND subject = %(subject)s AND control_point = %(control_point)s",
-                                            {'tg_id': str(user_auth),
-                                             'subject': subject,
-                                             'control_point': control_point,
-                                             'current_mark': current_mark,
-                                             'date': date})
-                                        conn.commit()
+                    info_processing(user_auth, updater.bot)
         except RuntimeError:
             print('RuntimeError')
         print('Жду')
