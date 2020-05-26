@@ -1,6 +1,8 @@
 import time
 import telegram
 import psycopg2
+import sys
+import traceback
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from etis import *
 from contextlib import closing
@@ -39,7 +41,7 @@ def start_handler(bot, update):
     custom_keyboard = [['/login', '/help']]
     reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
     bot.send_message(chat_id=update.message.from_user.id,
-                     text='Привет! Этот бот поможет не пропустить новые оценки в ЕТИСе!\nНажмите /login для ввода логина и пароля\nИли /help для вывода справки',
+                     text='Привет! Этот бот поможет Вам не пропустить новые оценки в ЕТИСе!\nНажмите /login чтобы начать\nИли /help для просмотра информации',
                      reply_markup=reply_markup)
 
 
@@ -74,15 +76,22 @@ def stop_handler(bot, update):
             cursor_local.execute("DELETE FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
                                  {'tg_id': str(update.message.from_user.id)})
             conn_local.commit()
-    update.message.reply_text('Вы успешно отписались от уведомлений\nЧтобы включить бота заново, введите /login')
+    custom_keyboard = [['/login', '/help']]
+    reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
+    bot.send_message(chat_id=update.message.from_user.id,
+                     text='Вы успешно отписались от уведомлений\nЧтобы включить бота заново, введите /login',
+                     reply_markup=reply_markup)
 
 
 def help_handler(bot, update):
     update.message.reply_text('Бот призван помочь студентам вовремя узнавать об оценках в их личном кабинете. '
                               'Чтобы бот начал работу, нажмите /login. После этого введите логин от личного кабинета.'
                               'Затем введите свой пароль.'
-                              'Если всё в порядке и данные введены верно, то бот оповестит Вас о начале работы.'
+                              'Если всё в порядке, и данные введены верно, то бот оповестит Вас о начале работы.'
                               'Чтобы перестать получать уведомления и удалить всю информацию о себе из бота, введите /stop.\n\n'
+                              'Внимание! Бот не несет ответственность за сохранность вводимых данных. '
+                              'Пользователь добровольно передаёт логин и пароль от личного кабинета ЕТИС для использования внутри бота. '
+                              'Пароли хранятся в зашифрованном виде и не передаются третьим лицам.\n\n'
                               'Если Вы обнаружили ошибку, нажмите /report')
 
 
@@ -123,16 +132,27 @@ def auth_handler(bot, update):
                              'auth': 'True',
                              'session_time': str(time.time())})
                     conn_local.commit()
-            update.message.reply_text('Вход успешен.\nБот пришлёт уведомление, когда у Вас появится новая оценка. Для отключения бота нажмите /stop')
+            custom_keyboard = [['/stop', '/help']]
+            reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
+            bot.send_message(chat_id=update.message.from_user.id,
+                             text='Вход успешен.\nБот пришлёт уведомление, когда у Вас появится новая оценка. Для отключения бота нажмите /stop',
+                             reply_markup=reply_markup)
             auth_dict[update.message.from_user.id] = True
             info_processing(update.message.from_user.id, bot)
         elif auth_result_local == 0:
             print('провальная авторизация', update.message.from_user.id)
             del session_dict[update.message.from_user.id]
-            update.message.reply_text('Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для '
-                                      'просмотра введённых данных нажмите /user_data')
+            custom_keyboard = [['/login', '/help']]
+            reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
+            bot.send_message(chat_id=update.message.from_user.id,
+                             text='Неверный логин или пароль. Пожалуйста, повторите ввод /login. Для просмотра введённых данных нажмите /user_data',
+                             reply_markup=reply_markup)
         else:
-            update.message.reply_text('Серверы ЕТИС в данный момент недоступны, повторите попытку позже')
+            custom_keyboard = [['/login', '/help']]
+            reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
+            bot.send_message(chat_id=update.message.from_user.id,
+                             text='Серверы ЕТИС в данный момент недоступны, повторите попытку позже',
+                             reply_markup=reply_markup)
 
 
 def text_handler(bot, update):
@@ -147,7 +167,7 @@ def text_handler(bot, update):
         update.message.reply_text('Для просмотра введённых данных нажмите /user_data')
         update.message.reply_text('Для повторного ввода данных нажмите /login')
         update.message.reply_text('Для старта бота нажмите /authorize')
-    elif report_flag_dict[update.message.from_user.id]:
+    elif report_flag_dict.get(update.message.from_user.id):
         rep = update.message.text
         dt = datetime.now().timetuple()
         date = str(dt[0]) + '-' + str(dt[1]) + '-' + str(dt[2]) + ' ' + str(dt[3]) + ':' + str(dt[4]) + ':' + str(dt[5])
@@ -211,7 +231,7 @@ def info_processing(user_auth_local, bot_local):
                     date_to_verify = fetch_local[1]
                     if (current_mark != current_mark_to_verify) or (date != str(date_to_verify)):
                         print('Отправляю новую оценку', user_auth_local)
-                        new_mark_message = 'У вас новая оценка!\nПредмет: {0}\nКонтрольная точка: {1}\nОценка: {2}\nПроходной балл: {3}\nМаксимальный балл: {4}'.format(
+                        new_mark_message = 'У Вас новая оценка!\n\nПредмет: {0}\n\nКонтрольная точка: {1}\n\nОценка: {2}\n\nПроходной балл: {3}\n\nМаксимальный балл: {4}'.format(
                             subject, control_point, current_mark, passing_mark, max_mark)
                         bot_local.send_message(int(user_auth_local), new_mark_message)
                         cursor_local.execute(
@@ -284,8 +304,10 @@ if __name__ == '__main__':
                             conn2.commit()
 
     while True:
-        try:
-            for user_auth in auth_dict:  # пробегаем всех пользователей
+        start_time = time.time()
+        auth_dict_stable = auth_dict.copy()
+        for user_auth in auth_dict_stable:  # пробегаем всех пользователей
+            try:
                 with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
                     with conn.cursor() as cursor:
                         cursor.execute("SELECT session_time FROM tg_user_data WHERE tg_id = %(tg_id)s",
@@ -330,9 +352,18 @@ if __name__ == '__main__':
                         continue
                 print('проверяю юзера ', user_auth)
                 info_processing(user_auth, updater.bot)
-        except:
-            print('ОШИБКА')
-        print('____________________________________________________')
+                time.sleep(5)
+            except:
+                for frame in traceback.extract_tb(sys.exc_info()[2]):
+                    fname, lineno, fn, text = frame
+                    print('-------------------------ОШБИКА ' + str(user_auth)+'-------------------------')
+                    print("Ошибка в  %s в строке %d" % (fname, lineno))
+                    print(text)
+                    print('-------------------------КОНЕЦ ОШИБКИ-------------------------')
+                continue
         ss = requests.Session()
         ss.get(APP_NAME)
-        time.sleep(RECHECK_TIME)
+        end_time = time.time()
+        if end_time - start_time < RECHECK_TIME:
+            print('___________Жду ', RECHECK_TIME - end_time + start_time, '___________')
+            time.sleep(RECHECK_TIME - end_time + start_time)
