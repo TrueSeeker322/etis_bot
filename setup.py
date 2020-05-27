@@ -71,12 +71,12 @@ def user_data_handler(bot, update):
 
 def stop_handler(bot, update):
     print('Выключаю бот ', update.message.from_user.id)
-    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Удаляем запись из БД
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT tg_id FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
-                           {'tg_id': str(update.message.from_user.id)})
-            fetch = cursor.fetchone()
-            if fetch is not None:
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn1:  # Удаляем запись из БД
+        with conn1.cursor() as cursor1:
+            cursor1.execute("SELECT tg_id FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
+                            {'tg_id': str(update.message.from_user.id)})
+            fetch1 = cursor1.fetchone()
+            if fetch1 is not None:
                 del auth_dict[update.message.from_user.id]
                 with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Удаляем запись из БД
                     with conn_local.cursor() as cursor_local:
@@ -129,7 +129,6 @@ def auth_handler(bot, update):
                              'etis_pass': pass_dict[update.message.from_user.id].decode('utf-8'),
                              'auth': 'True',
                              'session_time': str(time.time())})
-                        # cursor_local.execute('SELECT * FROM tg_user_data;')
                     else:
                         cursor_local.execute(
                             "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s, auth = %(auth)s, session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
@@ -378,12 +377,14 @@ if __name__ == '__main__':
                 print('проверяю юзера ', user_auth)
                 info_processing(user_auth, updater.bot)
                 time.sleep(5)
-            except:
+            except Exception as ex:
                 for frame in traceback.extract_tb(sys.exc_info()[2]):
                     fname, lineno, fn, text = frame
                     print('-------------------------ОШБИКА ' + str(user_auth) + '-------------------------')
+                    print(ex)
                     print("Ошибка в  %s в строке %d" % (fname, lineno))
                     print(text)
+                    print(sys.exc_info()[0])
                     print('-------------------------КОНЕЦ ОШИБКИ-------------------------')
                 continue
         ss = requests.Session()
