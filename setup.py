@@ -15,6 +15,7 @@ PASSKEY = os.environ["PASS_KEY"].encode()
 APP_NAME = os.environ['APP_NAME']
 RECHECK_TIME = int(os.environ['RECHECK_TIME'])
 SESSION_TIMEOUT = int(os.environ['SESSION_TIMEOUT'])
+ADMIN_ID = os.environ['ADMIN_ID']
 
 
 def pass_encrypt(password):  # шифрование пароля
@@ -70,12 +71,18 @@ def user_data_handler(bot, update):
 
 def stop_handler(bot, update):
     print('Выключаю бот ', update.message.from_user.id)
-    del auth_dict[update.message.from_user.id]
-    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Удаляем запись из БД
-        with conn_local.cursor() as cursor_local:
-            cursor_local.execute("DELETE FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
-                                 {'tg_id': str(update.message.from_user.id)})
-            conn_local.commit()
+    with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Удаляем запись из БД
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT tg_id FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
+                           {'tg_id': str(update.message.from_user.id)})
+            fetch = cursor.fetchone()
+            if fetch is not None:
+                del auth_dict[update.message.from_user.id]
+                with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Удаляем запись из БД
+                    with conn_local.cursor() as cursor_local:
+                        cursor_local.execute("DELETE FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
+                                             {'tg_id': str(update.message.from_user.id)})
+                        conn_local.commit()
     custom_keyboard = [['/login', '/help']]
     reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
     bot.send_message(chat_id=update.message.from_user.id,
@@ -122,7 +129,7 @@ def auth_handler(bot, update):
                              'etis_pass': pass_dict[update.message.from_user.id].decode('utf-8'),
                              'auth': 'True',
                              'session_time': str(time.time())})
-                        cursor_local.execute('SELECT * FROM tg_user_data;')
+                        # cursor_local.execute('SELECT * FROM tg_user_data;')
                     else:
                         cursor_local.execute(
                             "UPDATE tg_user_data SET etis_login = %(etis_login)s, etis_pass = %(etis_pass)s, auth = %(auth)s, session_time = %(session_time)s WHERE tg_id= %(tg_id)s;",
@@ -181,18 +188,31 @@ def text_handler(bot, update):
                      'date': date})
                 conn_local.commit()
         update.message.reply_text('Ваша отчет об ошибке успешно отправлен ')
+    elif mail.get(update.message.from_user.id):
+        mail[update.message.from_user.id] = False
+        msg = update.message.text.rsplit('_')
+        tg_id = msg[0]
+        message = msg[1]
+        bot.send_message(chat_id=tg_id,
+                         text=message)
 
 
 def report_handler(bot, update):
     password_flag_dict[update.message.from_user.id] = False
     login_flag_dict[update.message.from_user.id] = False
     report_flag_dict[update.message.from_user.id] = True
-    update.message.reply_text('Чтобы отправить сообщение о проблеме, подробно опишите ошибку в своем следующем сообщении. Для отмены нажмите /cancel_report')
+    update.message.reply_text(
+        'Чтобы отправить сообщение о проблеме, подробно опишите ошибку в своем следующем сообщении. Для отмены нажмите /cancel_report')
 
 
 def cancel_report_handler(bot, update):
     report_flag_dict[update.message.from_user.id] = False
     update.message.reply_text('Отправка успешно отменена')
+
+
+def mail_handler(bot, update):
+    if str(update.message.from_user.id) == ADMIN_ID:
+        mail[update.message.from_user.id] = True
 
 
 def info_processing(user_auth_local, bot_local):
@@ -273,6 +293,7 @@ report_flag_dict = {}
 session_dict = {}  # словарь всех подключений
 login_dict = {}  # словарь логинов
 pass_dict = {}  # словарь паролей
+mail = {}
 
 if __name__ == '__main__':
     updater = Updater(TOKEN)
@@ -285,6 +306,8 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("help", help_handler))
     updater.dispatcher.add_handler(CommandHandler("report", report_handler))
     updater.dispatcher.add_handler(CommandHandler("cancel_report", cancel_report_handler))
+    updater.dispatcher.add_handler(CommandHandler("mail", mail_handler))
+
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
     run(updater)
 
@@ -308,7 +331,8 @@ if __name__ == '__main__':
         auth_dict_stable = auth_dict.copy()
         for user_auth in auth_dict_stable:  # пробегаем всех пользователей
             try:
-                with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
+                with closing(
+                        psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Проверям время последней сессии
                     with conn.cursor() as cursor:
                         cursor.execute("SELECT session_time FROM tg_user_data WHERE tg_id = %(tg_id)s",
                                        {'tg_id': str(user_auth)})
@@ -336,8 +360,9 @@ if __name__ == '__main__':
                                 conn.commit()
                     elif auth_result == 0:
                         print('Данные пользователя ', user_auth, ' устарели')
-                        updater.bot.send_message(int(user_auth), 'Данные для входа в ЕТИС устарели, пожалуйста, введите обновленные данные /login'
-                                                                 '\nЕсли Вы видите это сообщение, но логин и пароль не изменялись - сообщите об ошибке /report')
+                        updater.bot.send_message(int(user_auth),
+                                                 'Данные для входа в ЕТИС устарели, пожалуйста, введите обновленные данные /login'
+                                                 '\nЕсли Вы видите это сообщение, но логин и пароль не изменялись - сообщите об ошибке /report')
                         print('Выключаю бот ', user_auth)
                         del auth_dict[user_auth]
                         with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Удаляем запись из БД
@@ -356,7 +381,7 @@ if __name__ == '__main__':
             except:
                 for frame in traceback.extract_tb(sys.exc_info()[2]):
                     fname, lineno, fn, text = frame
-                    print('-------------------------ОШБИКА ' + str(user_auth)+'-------------------------')
+                    print('-------------------------ОШБИКА ' + str(user_auth) + '-------------------------')
                     print("Ошибка в  %s в строке %d" % (fname, lineno))
                     print(text)
                     print('-------------------------КОНЕЦ ОШИБКИ-------------------------')

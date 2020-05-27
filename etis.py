@@ -27,6 +27,7 @@ def info_scrapping(sess):  # сборка информации на страни
     table_array = []  # массив веб данных
     count_rows = 0  # сквозной id строки
     count_tables = 0  # id таблицы
+    repeat_list = []  # список чтобы исключать повторяющиеся кт по одному и тому же предмету
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')  # парсинг страницы
     table_names = soup.findAll('h3')  # выделение имен всех таблиц
@@ -54,8 +55,17 @@ def info_scrapping(sess):  # сборка информации на страни
         row_id = 4
         for j in range(rows_max - 1):
             table_array.append([])
-            table_array[count_rows].append(str(table_names[count_tables]))  # название предмета
-            table_array[count_rows].append(i.contents[row_id].contents[1].text)  # название работы
+
+            subject = str(table_names[count_tables])
+            control_point = i.contents[row_id].contents[1].text
+
+            table_array[count_rows].append(subject)  # название предмета
+
+            if repeat_list.count(subject+control_point) != 0:
+                control_point += str(repeat_list.count(subject+control_point))
+            repeat_list.append(subject+i.contents[row_id].contents[1].text)
+
+            table_array[count_rows].append(control_point)  # название работы
             table_array[count_rows].append(i.contents[row_id].contents[7].text)  # текущий балл
             table_array[count_rows].append(i.contents[row_id].contents[9].text)  # проходной балл
             table_array[count_rows].append(i.contents[row_id].contents[13].text)  # максимальный балл
