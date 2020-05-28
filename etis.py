@@ -1,5 +1,3 @@
-import requests
-import os
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 
@@ -12,7 +10,7 @@ headers = {
 
 
 def authentication(auth, sess):  # функция аутентификации
-    code = sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
+    sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
     r = sess.get(url, headers=headers)  # получение страницы
     soup = BeautifulSoup(r.content, 'html.parser')
     if soup.text.find('2396870', 0, len(soup.text)) != -1:
