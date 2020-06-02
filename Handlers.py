@@ -1,7 +1,7 @@
 import telegram
 from Funcs import *
 from datetime import datetime
-from setup import login_dict, pass_dict, report_flag_dict, login_flag_dict, auth_dict, password_flag_dict, mail
+from setup import login_dict, pass_dict, report_flag_dict, login_flag_dict, auth_dict, password_flag_dict, mail, session_dict, mail_all
 
 
 def start_handler(bot, update):
@@ -113,7 +113,6 @@ def auth_handler(bot, update):
             info_processing(update.message.from_user.id, bot)
         elif auth_result_local == 0:
             print(Colors.MAGENTA + 'провальная авторизация' + Colors.DROP, update.message.from_user.id)
-            del session_dict[update.message.from_user.id]
             custom_keyboard = [['/login', '/help']]
             reply_markup = telegram.ReplyKeyboardMarkup(keyboard=custom_keyboard, resize_keyboard=True)
             bot.send_message(chat_id=update.message.from_user.id,
@@ -152,7 +151,7 @@ def text_handler(bot, update):
                      'rep': rep,
                      'date': date})
                 conn_local.commit()
-        update.message.reply_text('Ваша отчет об ошибке успешно отправлен ')
+        update.message.reply_text('Ваш отчет об ошибке успешно отправлен ')
     elif mail.get(update.message.from_user.id):
         mail[update.message.from_user.id] = False
         msg = update.message.text.rsplit('_')
@@ -160,6 +159,20 @@ def text_handler(bot, update):
         message = msg[1]
         bot.send_message(chat_id=tg_id,
                          text=message)
+    elif mail_all.get(update.message.from_user.id):
+        mail_all[update.message.from_user.id] = False
+        message = update.message.text
+        with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn_local:  # Обновление БД
+            with conn_local.cursor() as cursor_local:
+                cursor_local.execute("SELECT tg_id FROM tg_user_data;")
+                for i in cursor_local:
+                    try:
+                        bot.send_message(chat_id=i[0],
+                                         text=message)
+                        print(Colors.BLUE + 'Отправляю рассылку ', i[0])
+                        time.sleep(1)
+                    except:
+                        pass
 
 
 def report_handler(bot, update):
@@ -167,7 +180,7 @@ def report_handler(bot, update):
     login_flag_dict[update.message.from_user.id] = False
     report_flag_dict[update.message.from_user.id] = True
     update.message.reply_text(
-        'Чтобы отправить сообщение о проблеме, подробно опишите ошибку в своем следующем сообщении. Для отмены нажмите /cancel_report')
+        'Чтобы отправить сообщение о проблеме (или отзыв), подробно опишите ошибку в своем следующем сообщении. Для отмены нажмите /cancel_report')
 
 
 def cancel_report_handler(bot, update):
@@ -179,3 +192,7 @@ def mail_handler(bot, update):
     if str(update.message.from_user.id) == ADMIN_ID:
         mail[update.message.from_user.id] = True
 
+
+def mail_all_handler(bot, update):
+    if str(update.message.from_user.id) == ADMIN_ID:
+        mail_all[update.message.from_user.id] = True

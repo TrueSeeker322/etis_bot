@@ -19,6 +19,8 @@ session_dict = {}  # словарь всех подключений
 login_dict = {}  # словарь логинов
 pass_dict = {}  # словарь паролей
 mail = {}
+mail_all = {}
+
 
 if __name__ == '__main__':
     updater = Updater(TOKEN)
@@ -32,10 +34,11 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler("report", report_handler))
     updater.dispatcher.add_handler(CommandHandler("cancel_report", cancel_report_handler))
     updater.dispatcher.add_handler(CommandHandler("mail", mail_handler))
+    updater.dispatcher.add_handler(CommandHandler("mail_all", mail_all_handler))
 
     updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), text_handler))
     run(updater)
 
     restart_auth_dict()
-    
+
     main_loop(updater)

@@ -39,13 +39,9 @@ def info_scrapping(sess):  # сборка информации на страни
     for i in a:
         i = i.text.replace('\n', '')
         if i not in trimester_names and i != 'оценки в триместре':
-            for j in i:
-                if j != ' ':
-                    trimester += j
-                else:
-                    break
-            if trimester != '':
-                break
+            trimester = (i.rsplit(' '))[0]
+            break
+
     table_names = [head.get_text() for head in table_names]  # выделение имен всех таблиц
     tables = soup.findAll('table', attrs={'class': 'common'})  # выделение всех таблиц
     for i in tables:  # формирование массива со строками таблицы оценок

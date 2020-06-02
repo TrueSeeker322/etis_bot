@@ -76,7 +76,7 @@ def info_processing(user_auth_local, bot_local):
                 "SELECT DISTINCT trim FROM user_tables WHERE tg_id = %(tg_id)s",
                 {'tg_id': str(user_auth_local)})
             fetch_local = cursor_local.fetchone()
-            if fetch_local[0] is not None:
+            if fetch_local is not None:
                 for trim_to_verify in fetch_local:
                     if int(trim) > int(trim_to_verify):
                         trim_to_delete = trim_to_verify
@@ -151,7 +151,7 @@ def main_loop(updater):
                         del auth_dict[user_auth]
                         with closing(psycopg2.connect(DATABASE_URL, sslmode='require')) as conn:  # Удаляем запись из БД
                             with conn.cursor() as cursor:
-                                cursor.execute("DELETE FROM  tg_user_data WHERE tg_id= %(tg_id)s;",
+                                cursor.execute("UPDATE tg_user_data SET auth = false WHERE tg_id= %(tg_id)s;",
                                                {'tg_id': str(user_auth)})
                                 conn.commit()
                         continue
@@ -161,7 +161,7 @@ def main_loop(updater):
                         continue
                 print('проверяю пользователя ', user_auth)
                 info_processing(user_auth, updater.bot)
-                time.sleep(5)
+                time.sleep(3)
             except Exception as ex:
                 for frame in traceback.extract_tb(sys.exc_info()[2]):
                     fname, lineno, fn, text = frame
@@ -170,7 +170,7 @@ def main_loop(updater):
                     print("Ошибка в  %s в строке %d" % (fname, lineno))
                     print(text)
                     print(sys.exc_info()[0])
-                    print('-------------------------КОНЕЦ ОШИБКИ-------------------------' + Colors.DROP)
+                    print(Colors.RED + '-------------------------КОНЕЦ ОШИБКИ-------------------------')
                 continue
         ss = requests.Session()
         ss.get(APP_NAME)
