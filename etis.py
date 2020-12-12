@@ -1,71 +1,125 @@
-from fake_useragent import UserAgent
-from bs4 import BeautifulSoup
+import time
 
-url = 'https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current'
-url_login = 'https://student.psu.ru/pls/stu_cus_et/stu.login'
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
-headers = {
-    'User-Agent': UserAgent().chrome
-}
+from data_base_funcs import *
 
 
-def authentication(auth, sess):  # функция аутентификации
-    sess.post(url_login, data=auth, headers=headers)  # Пост запрос на авторизацию, вернет код ответа сервера
-    r = sess.get(url, headers=headers)  # получение страницы
-    soup = BeautifulSoup(r.content, 'html.parser')
-    if soup.text.find('2396870', 0, len(soup.text)) != -1:
-        return 0  # логин или пароль не верны
-    elif soup.text.find('управление вузом', 0, len(soup.text)) != -1:
-        return 1  # вход успешен
+def get_driver():
+    """Получение драйвера"""
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--no-sandbox")
+    driver = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=chrome_options)
+    return driver
+
+
+def get_marks_page(driver, login, password):
+    """Получение страницы с оценками"""
+    driver.get("https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current")
+    try:
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'login')))
+    except:
+        print(driver.page_source)
+    id_field = driver.find_element_by_id('login')
+    pass_field = driver.find_element_by_id('password')
+    button = driver.find_element_by_id('sbmt')
+
+    id_field.send_keys(login)
+    time.sleep(0.5)
+    pass_field.send_keys(password)
+    time.sleep(0.5)
+
+    button.click()
+    return driver
+
+
+def check_auth(user_id, login, password):
+    """Провекра авторизации, при вводе логина и пароля в чате с ботом"""
+    driver = get_driver()
+    driver = get_marks_page(driver, login, password)
+    try:
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CLASS_NAME, 'common')))
+    except:
+        print('woto ne tak')
+        print(driver.page_source)
+        return False
+    driver.get("https://student.psu.ru/pls/stu_cus_et/stu.signs?p_mode=current")
+    WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CLASS_NAME, 'common')))
+
+    upload_table(user_id, driver)
+    driver.quit()
+    return True
+
+
+def get_table(driver):
+    """Парсинг таблицы оценок"""
+    table_dict = {}
+    table_names = []
+
+    submenu = driver.find_elements_by_class_name('submenu')[1]
+    submenu_items = submenu.find_elements_by_class_name('submenu-item')
+    trimester = None
+    for item in submenu_items:
+        try:
+            item.find_element_by_tag_name('a')
+        except NoSuchElementException:
+            trimester = item.text.split(' триместр')[0]
+
+    span9 = driver.find_element_by_class_name('span9')
+    h3 = span9.find_elements_by_tag_name('h3')
+    for i in h3:
+        table_names.append(i.text)
+    tables = span9.find_elements_by_tag_name('table')
+    table_counter = 0
+    for table in tables:
+        trs = table.find_elements_by_tag_name('tr')[2:-1]  # обрезаем первые две и последнюю строки потому что там хедеры и футер таблицы
+        table_list = []
+        repeat_list = []  # список чтобы исключать повторяющиеся кт по одному и тому же предмету
+        for tr in trs:
+            tds = tr.find_elements_by_tag_name('td')
+
+            control_point = tds[0].text
+            if control_point in repeat_list:
+                original_control_point_name = control_point
+                control_point += f' {repeat_list.count(control_point)}'
+                repeat_list.append(original_control_point_name)
+            else:
+                repeat_list.append(control_point)
+
+            current_mark = tds[3].text
+            passing_mark = tds[4].text
+            max_mark = tds[6].text
+            date = tds[8].get_attribute('title')
+            table_list.append({'control_point': control_point,
+                               'current_mark': current_mark,
+                               'passing_mark': passing_mark,
+                               'max_mark': max_mark,
+                               'date': date})
+        table_dict[table_names[table_counter]] = table_list
+        table_counter += 1
+    return table_dict, trimester
+
+
+def upload_table(user_id, driver):
+    tables, trimester = get_table(driver)
+    delete_from_control_points(user_id)
+    insert_new_control_points(user_id, tables, trimester)
+    print(f'New user data {user_id}')
+
+
+def is_etis_down(driver: webdriver.Chrome):
+    driver.delete_all_cookies()
+    driver.get('https://student.psu.ru/pls/stu_cus_et/stu.teach_plan')
+    try:
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'sbmt')))
+    except:
+        return True
     else:
-        return 2  # что-то с серверами
-
-
-def info_scrapping(sess):  # сборка информации на странице
-    table_array = []  # массив веб данных
-    count_rows = 0  # сквозной id строки
-    count_tables = 0  # id таблицы
-    repeat_list = []  # список чтобы исключать повторяющиеся кт по одному и тому же предмету
-    r = sess.get(url, headers=headers)  # получение страницы
-    soup = BeautifulSoup(r.content, 'html.parser')  # парсинг страницы
-    table_names = soup.findAll('h3')  # выделение имен всех таблиц
-    a = soup.findAll('span', attrs={'class': 'submenu-item'})
-    b = soup.findAll('a', attrs={'class': 'dashed'})
-    trimester_names = []
-    trimester = ''
-    for i in b:  # циклы для выделения номера текущего триместра
-        i = i.text.replace('\n', '')
-        trimester_names.append(i)
-    for i in a:
-        i = i.text.replace('\n', '')
-        if i not in trimester_names and i != 'оценки в триместре':
-            trimester = (i.rsplit(' '))[0]
-            break
-
-    table_names = [head.get_text() for head in table_names]  # выделение имен всех таблиц
-    tables = soup.findAll('table', attrs={'class': 'common'})  # выделение всех таблиц
-    for i in tables:  # формирование массива со строками таблицы оценок
-        rows_max = (len(i) - 3) // 2
-        row_id = 4
-        for j in range(rows_max - 1):
-            table_array.append([])
-
-            subject = str(table_names[count_tables])
-            control_point = i.contents[row_id].contents[1].text
-
-            table_array[count_rows].append(subject)  # название предмета
-
-            if repeat_list.count(subject+control_point) != 0:
-                control_point += str(repeat_list.count(subject+control_point))
-            repeat_list.append(subject+i.contents[row_id].contents[1].text)
-
-            table_array[count_rows].append(control_point)  # название работы
-            table_array[count_rows].append(i.contents[row_id].contents[7].text)  # текущий балл
-            table_array[count_rows].append(i.contents[row_id].contents[9].text)  # проходной балл
-            table_array[count_rows].append(i.contents[row_id].contents[13].text)  # максимальный балл
-            table_array[count_rows].append(i.contents[row_id].contents[17]['title'])  # дата выставления оценки
-            table_array[count_rows].append(trimester)  # номер триместра
-            count_rows += 1
-            row_id += 2
-        count_tables += 1
-    return table_array
+        return False
